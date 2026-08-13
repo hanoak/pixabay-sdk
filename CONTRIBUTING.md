@@ -17,19 +17,19 @@ cp .env.example .env # optional — only used by local dev/test scripts, if any 
 
 ### Scripts
 
-| Command                 | What it does                                                                                     |
-| ----------------------- | ------------------------------------------------------------------------------------------------ |
-| `npm run build`         | Bundle to `dist/` with tsup (dual ESM + CJS, `.d.ts`).                                           |
-| `npm run dev`           | tsup in watch mode.                                                                              |
-| `npm run docs:api`      | Generate the TypeDoc API reference to `docs/api/` (gitignored).                                  |
-| `npm run typecheck`     | `tsc --noEmit` (strict).                                                                         |
-| `npm run lint`          | ESLint (flat config).                                                                            |
-| `npm run format`        | Prettier write.                                                                                  |
-| `npm test`              | Vitest (unit tests).                                                                             |
-| `npm run test:coverage` | Vitest with v8 coverage + thresholds (the coverage gate).                                        |
-| `npm run license:check` | Fail if any production dependency has a non-permissive license.                                  |
-| `npm run check`         | typecheck + lint + format:check + test (core local gate).                                        |
-| `npm run check:package` | Build, then `publint` + `attw` + the require/import smoke script — the publishable-shape checks. |
+| Command                 | What it does                                                                                                                                         |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run build`         | Bundle to `dist/` with tsup (dual ESM + CJS, `.d.ts`).                                                                                               |
+| `npm run dev`           | tsup in watch mode.                                                                                                                                  |
+| `npm run docs:api`      | Generate the TypeDoc API reference to `docs/api/` (gitignored).                                                                                      |
+| `npm run typecheck`     | `tsc --noEmit` (strict).                                                                                                                             |
+| `npm run lint`          | ESLint (flat config).                                                                                                                                |
+| `npm run format`        | Prettier write.                                                                                                                                      |
+| `npm test`              | Vitest (unit tests).                                                                                                                                 |
+| `npm run test:coverage` | Vitest with v8 coverage + thresholds (the coverage gate).                                                                                            |
+| `npm run license:check` | Fail if any production dependency has a non-permissive license.                                                                                      |
+| `npm run check`         | typecheck + lint + format:check + test (core local gate).                                                                                            |
+| `npm run check:package` | Build, then `publint` + `attw` + the require/import smoke script + `npm pack --dry-run` — the publishable-shape checks, matching CI's `package` job. |
 
 ## Project structure & conventions
 
