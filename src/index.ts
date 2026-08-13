@@ -1,4 +1,19 @@
-// Scaffold placeholder. Real exports (PixabayClient, resource/param/result types,
-// the PixabayError hierarchy, formatAttribution, Cache/Logger) land in later phases —
-// see docs/ROADMAP.md.
-export {}
+export {
+  PixabayApiError,
+  PixabayConfigError,
+  PixabayError,
+  PixabayNetworkError,
+  PixabayNotFoundError,
+  PixabayRateLimitError,
+  PixabayValidationError,
+} from './errors.js'
+export type { PixabayRateLimitErrorOptions } from './errors.js'
+
+export { createNoopLogger, createConsoleLogger } from './lib/logger.js'
+export type { Logger, LogLevel } from './lib/logger.js'
+
+export { createInMemoryCache } from './lib/cache.js'
+export type { Cache } from './lib/cache.js'
+
+// Remaining exports (PixabayClient, resource/param/result types,
+// formatAttribution) land in later phases — see docs/ROADMAP.md.
