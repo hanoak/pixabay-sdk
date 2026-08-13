@@ -8,7 +8,13 @@ import { VideosResource } from './resources/videos.js'
 
 /** Constructor options for {@link PixabayClient}. */
 export interface PixabayClientOptions {
-  /** Falls back to `process.env.PIXABAY_API_KEY` when omitted. */
+  /**
+   * Falls back to `process.env.PIXABAY_API_KEY` when omitted, in environments
+   * where `process` exists (Node.js). In a browser bundle or an edge runtime
+   * with no `process` global, this option is required — see the README's
+   * Compatibility section on why bundling this SDK's key into browser code
+   * isn't recommended regardless.
+   */
   apiKey?: string
   /**
    * Backs the mandatory 24-hour response cache Pixabay's terms require.
@@ -30,6 +36,19 @@ export interface PixabayClientOptions {
 
 const DEFAULT_SAFESEARCH = true
 
+// Guards against `process` not existing at all — a browser bundle or an edge
+// runtime (Cloudflare Workers, Vercel Edge) has no such global. Referencing
+// the bare `process` identifier there throws a ReferenceError immediately,
+// not just `undefined`, so `typeof process` must be checked first; a plain
+// `process.env.X` reference would crash the constructor with a raw
+// ReferenceError instead of the intended PixabayConfigError.
+function readApiKeyFromEnv(): string | undefined {
+  if (typeof process === 'undefined' || !process.env) {
+    return undefined
+  }
+  return process.env.PIXABAY_API_KEY
+}
+
 /**
  * The entry point for this SDK. Wraps the Pixabay images and videos search
  * APIs behind a resource-namespaced client with a mandatory response cache,
@@ -50,7 +69,7 @@ export class PixabayClient {
   /** @throws {PixabayConfigError} if no API key is available from either `options.apiKey` or `PIXABAY_API_KEY`. */
   constructor(options: PixabayClientOptions = {}) {
     // `||`, not `??` — an empty string is as unusable as a missing key.
-    const apiKey = options.apiKey || process.env.PIXABAY_API_KEY
+    const apiKey = options.apiKey || readApiKeyFromEnv()
     if (!apiKey) {
       throw new PixabayConfigError(
         'Missing Pixabay API key. Pass { apiKey } to `new PixabayClient()`, or set the ' +
