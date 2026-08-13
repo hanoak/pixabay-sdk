@@ -130,13 +130,18 @@ optional sub-exports.
 - [ ] `[v1]` Unit tests for the cache layer: TTL expiry, key-stripping (never contains the
       raw API key), normalization (param order doesn't create duplicate entries).
 - [ ] `[v1]` Type-checking, lint, and format checks in CI.
-- [ ] `[v1]` Coverage thresholds (v8, regression floor in `vitest.config.ts`, set just below
-      what the real suite achieves; raise as the suite grows, never lower to turn a build
-      green).
-- [ ] `[v1]` One integration-style test exercising a full `images.search()` call against a
-      fake-fetch fixture end-to-end.
-- [ ] `[v1]` **Package-shape smoke test**: both `require()` and `import` resolve the built
+- [x] `[v1]` Coverage thresholds (v8, regression floor in `vitest.config.ts`). ✅ Kept at 70
+      (not raised to "just below the real suite's 84-97%" as originally planned here) —
+      the bare-minimal-tests convention from CLAUDE.md means the floor exists only to catch
+      a module shipping with zero tests, not to track the suite's actual coverage.
+- [x] `[v1]` One integration-style test exercising a full `images.search()` call against a
+      fake-fetch fixture end-to-end. ✅ `test/integration.test.ts`, using Pixabay's own
+      documented example response through the full public `PixabayClient` composition.
+- [x] `[v1]` **Package-shape smoke test**: both `require()` and `import` resolve the built
       package correctly — the dual-format equivalent of the MCP server's stdout-purity test.
+      ✅ `scripts/verify-package-shape.mjs`, wired into `npm run check:package` after the
+      build (plain Node + `node:assert`, not vitest — it validates the real `dist/` output,
+      not source run through vitest's own TS-transform pipeline).
 - [ ] `[v1]` `publint` + `@arethetypeswrong/cli --pack . --profile node16` (confirmed at
       scaffold time — checks Node's own dual ESM/CJS resolution; `esm-only` doesn't apply
       to this package) in CI.
