@@ -12,7 +12,7 @@ server or CLI tool. Unofficial; not affiliated with or endorsed by Pixabay.
 Quality bar: production-ready, legal/safe, community-maintained open-source npm package —
 not a prototype. Every decision should be defensible to a stranger reading the repo cold.
 "Standard" and "enterprise-grade" are qualities the **one** package has simultaneously — a
-five-minute happy-path integration *and* production hardening on by default (retries,
+five-minute happy-path integration _and_ production hardening on by default (retries,
 rate-limit awareness, structured errors, cancellation) — never a paywall or feature flag.
 Pixabay has no tiering to hang an "enterprise edition" off of: one flat API key, no OAuth,
 no orgs.
@@ -28,7 +28,8 @@ below, never silently.
 
 ## Tech stack (decided — do not relitigate without discussion)
 
-- **Language/runtime**: TypeScript, Node.js `>=20`.
+- **Language/runtime**: TypeScript, Node.js `>=22`. (Deliberately higher than the sibling
+  MCP server's `>=20` — decided at scaffold time; see the dev-tooling note below for why.)
 - **Module format**: dual **ESM + CJS** (`tsup` `format: ['esm', 'cjs']`) — a library gets
   `require()`'d by consumers a bin never has to support. No shebang, no `bin` field.
 - **Validation**: `zod` for both public-method input validation and lenient Pixabay
@@ -36,7 +37,7 @@ below, never silently.
   project pins `^4.4.3`; verify, don't assume).
 - **Runtime deps**: `zod` only, plus Node's own global `fetch` — no axios/node-fetch/undici.
 - **Build**: `tsup` → `dist/`, dual ESM+CJS, `.d.ts` output, sourcemaps, `clean: true`,
-  target `node20`.
+  target `node22`.
 - **Test runner**: `vitest` (+ `@vitest/coverage-v8`). Dependency injection over network
   mocking — the client takes a `fetch` override in its constructor; zero real network calls
   in CI, no `msw`/`nock`.
@@ -49,6 +50,17 @@ below, never silently.
 - **Commits**: Conventional Commits, enforced by commitlint on a `commit-msg` hook.
 - **npm package**: `@hanoak/pixabay-sdk`, MIT license, public npm access. First release is
   `1.0.0`, not `0.1.0`.
+- **Why `>=22`, not `>=20` like the sibling project**: at scaffold time, `@changesets/cli`'s
+  newest major (`3.0.0`) requires Node `^22.11 || ^24 || >=26`, and `@commitlint/cli`/
+  `config-conventional`'s newest major (`21.x`) requires Node `>=22.12.0` — both ahead of
+  Node `20`. Rather than pin those two tools to an older major just to keep a `20` floor
+  (the alternative considered and rejected), the floor moved to `22` so the SDK's published
+  `engines.node`, the dev-tooling floor, and the CI matrix are all one number — no
+  split between "what consumers need" and "what contributors need." `lint-staged` (`17.x`,
+  needs `>=22.22.1`) and `@commitlint/*` are fine under a current `22.x` LTS patch
+  (`22.23.2` at scaffold time). The one holdout: `license-checker-rseidelsohn`'s newest
+  major (`5.x`) requires Node `>=24` — pinned to `^4.4.2` (Node `>=18`) instead, since `24`
+  wasn't the floor decision made here. Revisit that pin if the floor ever moves to `24`.
 
 ## Pixabay API facts that drive design (verify against current docs before relying on exact numbers)
 
@@ -56,7 +68,7 @@ Same upstream API as `pixabay-mcp-server` — these facts bind **any** caller, s
 over unchanged regardless of packaging:
 
 - **Auth**: a single API key passed as the `key` query parameter — Pixabay has **no header
-  option**. Supplied by the *consumer* via `new PixabayClient({ apiKey })`, with an optional
+  option**. Supplied by the _consumer_ via `new PixabayClient({ apiKey })`, with an optional
   fallback to `process.env.PIXABAY_API_KEY` as documented convenience sugar. Missing/empty
   key throws a `PixabayConfigError` synchronously at construction — fail fast, same spirit
   as the MCP server's startup check, different mechanism (there's no process to exit here).
@@ -74,7 +86,7 @@ over unchanged regardless of packaging:
   such images should be downloaded to your own server first (videos may be embedded
   directly). This SDK is a thin HTTP client: it returns Pixabay CDN URLs to the caller and
   makes no persistence decision itself. Document this pass-through clearly in the README so
-  the *consuming app* — not this SDK — owns that compliance decision, and reference the
+  the _consuming app_ — not this SDK — owns that compliance decision, and reference the
   sibling project's more detailed reasoning on the ephemeral-vs-permanent distinction.
 - **No systematic mass downloads.** Don't build a helper that auto-paginates an entire
   result set — `search()` exposes `page`/`per_page` passthrough; pagination control stays
@@ -123,14 +135,14 @@ Rules:
 - **Errors are typed thrown `Error` subclasses** (this is a library, not an MCP tool call) —
   never a raw `fetch`/`zod` error leaks to the consumer. See "Error handling" below.
 - **Cache and logger are pluggable via constructor injection**, not fixed implementations.
-  The cache is always used (mandatory per Pixabay's terms) but its *backend* is swappable —
+  The cache is always used (mandatory per Pixabay's terms) but its _backend_ is swappable —
   a consumer running this SDK across short-lived serverless invocations needs something
   like Redis, where the MCP server's single long-lived process never did.
 - **No secrets in logs or thrown errors.** The `key` query param is stripped by the
   redactor before a URL can reach a log line (via the injected `Logger`), a thrown error's
   message, or a stack trace.
 - **No `console.*` anywhere in `src/`** except inside `lib/logger.ts`'s opt-in
-  `createConsoleLogger()` — the *default* logger is a no-op, because a dependency printing
+  `createConsoleLogger()` — the _default_ logger is a no-op, because a dependency printing
   to a host app's console unprompted is a surprise, not a feature. (Contrast with the MCP
   server, which owns its whole process and can hardcode a stderr logger.)
 - Dependency-inject `fetch`, `Cache`, and `Logger` into `createPixabayHttpClient(config)` /
@@ -179,12 +191,12 @@ pattern.
 ## Public API surface
 
 ```ts
-const pixabay = new PixabayClient({ apiKey: '...' })      // or PIXABAY_API_KEY env fallback
-await pixabay.images.search({ q: 'cats' })                 // -> { total, totalHits, hits: Image[] }
-await pixabay.images.get({ id: 123 })                       // -> Image, or throws PixabayNotFoundError
+const pixabay = new PixabayClient({ apiKey: '...' }) // or PIXABAY_API_KEY env fallback
+await pixabay.images.search({ q: 'cats' }) // -> { total, totalHits, hits: Image[] }
+await pixabay.images.get({ id: 123 }) // -> Image, or throws PixabayNotFoundError
 await pixabay.videos.search({ q: 'ocean' })
 await pixabay.videos.get({ id: 456 })
-formatAttribution(image)                                    // -> "by {user} via Pixabay"
+formatAttribution(image) // -> "by {user} via Pixabay"
 ```
 
 - Resource-namespaced (`images`, `videos`), mirroring the 4 operations already implemented
@@ -229,9 +241,10 @@ formatAttribution(image)                                    // -> "by {user} via
   fake-fetch fixture end-to-end.
 - A **package-shape smoke test** asserting both `require()` and `import` resolve the built
   package correctly — the dual-format equivalent of the sibling project's stdout-purity
-  child-process test — plus `publint` and `attw --pack . --profile node16` (or the current
-  dual-package profile name; confirm against `@arethetypeswrong/cli`'s docs at scaffold
-  time) in CI.
+  child-process test — plus `publint` and `attw --pack . --profile node16` (confirmed at
+  scaffold time: `@arethetypeswrong/cli@0.18.5`'s valid `--profile` choices are `strict`,
+  `node16`, `esm-only` — `node16` is the one that checks Node's own dual ESM/CJS resolution,
+  which `esm-only` doesn't apply here) in CI.
 - Coverage: v8 provider, a regression-floor threshold in `vitest.config.ts` (start wherever
   the real suite lands, then never lower it to turn a red build green).
 - Validate the image/video wire schemas against real (sanitized) captured Pixabay response
@@ -284,7 +297,7 @@ formatAttribution(image)                                    // -> "by {user} via
   across invocations), so both are small injectable interfaces with a sane default,
   swappable by the consumer. The default logger is a silent no-op (not stderr) — a
   dependency printing unprompted is a surprise for a library, unlike a process-owning
-  server where stderr is the *only* legitimate output channel.
+  server where stderr is the _only_ legitimate output channel.
 - **No "enterprise edition."** Pixabay's API has no tiering to hang one off of. "Standard"
   and "enterprise-grade" are qualities the one package has simultaneously, never two
   products or a paywalled flag.

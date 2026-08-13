@@ -35,8 +35,10 @@ optional sub-exports.
 
 ## 0. Core stack decisions (foundational)
 
-- [ ] `[v1]` Language/runtime: **TypeScript + Node >=20** — decided (see CLAUDE.md)
-- [ ] `[v1]` Runtime validation with **zod** (public-method inputs *and* Pixabay API
+- [ ] `[v1]` Language/runtime: **TypeScript + Node >=22** — decided (see CLAUDE.md; higher
+      than the sibling project's `>=20` floor because of dev-tooling engine requirements
+      discovered at scaffold time)
+- [ ] `[v1]` Runtime validation with **zod** (public-method inputs _and_ Pixabay API
       responses) — decided
 - [ ] `[v1]` Module format: **dual ESM + CJS** via tsup — decided (differs from the MCP
       server's ESM-only)
@@ -51,8 +53,8 @@ optional sub-exports.
 ## 1. Pixabay API compliance (legal — non-negotiable)
 
 - [ ] `[v1]` **Document the hotlinking/persistence pass-through explicitly.** This SDK
-      returns Pixabay CDN URLs as-is and makes no persistence decision — the *consuming
-      app* decides whether/how long to display or cache an image. Write this down in the
+      returns Pixabay CDN URLs as-is and makes no persistence decision — the _consuming
+      app_ decides whether/how long to display or cache an image. Write this down in the
       README (a short "Image & Video URLs" section, referencing the sibling project's more
       detailed policy note) so it isn't silently assumed.
 - [ ] `[v1]` **Implement the mandatory 24-hour response cache** (`src/lib/cache.ts`) behind
@@ -135,21 +137,22 @@ optional sub-exports.
       fake-fetch fixture end-to-end.
 - [ ] `[v1]` **Package-shape smoke test**: both `require()` and `import` resolve the built
       package correctly — the dual-format equivalent of the MCP server's stdout-purity test.
-- [ ] `[v1]` `publint` + `@arethetypeswrong/cli --pack . ` with a **dual-package profile**
-      (not `esm-only`) in CI.
+- [ ] `[v1]` `publint` + `@arethetypeswrong/cli --pack . --profile node16` (confirmed at
+      scaffold time — checks Node's own dual ESM/CJS resolution; `esm-only` doesn't apply
+      to this package) in CI.
 - [ ] `[v1]` Validate zod schemas against committed, sanitized **real captured** Pixabay
       response fixtures (images + videos) — port the sibling project's fixtures if their
       shape still matches current docs, re-verify against a live response if/when a key is
       available.
-- [ ] `[v1]` CI test matrix: Node 20/22 × Linux/macOS/Windows (+ `.nvmrc`).
+- [ ] `[v1]` CI test matrix: Node 22/24 × Linux/macOS/Windows (+ `.nvmrc`).
 
 ## 5. CI/CD & release automation
 
 - [ ] `[v1]` `ci.yml`: a `quality` job (typecheck, lint, format:check, `audit:prod`,
       `test:coverage`, `license:check`), a `package` job (build + `publint` +
-      `attw --pack . --profile <dual-package>` + a require/import smoke script +
+      `attw --pack . --profile node16` + a require/import smoke script +
       `npm pack --dry-run` confirming the tarball ships only `dist/` + README + LICENSE),
-      and a `test` job matrix (Node 20/22 × ubuntu/macos/windows).
+      and a `test` job matrix (Node 22/24 × ubuntu/macos/windows).
 - [ ] `[v1]` `release.yml`: `changesets/action`, `HUSKY=0` in CI, `id-token: write` for
       provenance, `NPM_TOKEN` repo secret, least-privilege `permissions:` per job.
 - [ ] `[v1]` `secret-scan.yml`: gitleaks over full history on every push/PR.
@@ -207,7 +210,7 @@ optional sub-exports.
 - [ ] `[v1]` Cross-platform (macOS/Linux/Windows); `.gitattributes` forcing LF.
 - [ ] `[v1]` Pre-publish package validation in CI: `publint` + `@arethetypeswrong/cli`
       (dual-package profile) + `npm pack --dry-run` + the require/import smoke test.
-- [ ] `[v1]` Declare `engines.node` (`>=20`) + `.nvmrc`.
+- [ ] `[v1]` Declare `engines.node` (`>=22`) + `.nvmrc`.
 - [ ] `[v1]` Populate `package.json` discoverability metadata (keywords: pixabay,
       pixabay-api, sdk, images, videos, stock-media, stock-photos, typescript…).
 - [ ] `[v1]` `sideEffects: false` verified true — no import-time side effects anywhere in
@@ -276,7 +279,7 @@ optional sub-exports.
 2. The 24-hour cache is a **compliance requirement from Pixabay's own terms**, not a
    performance feature to defer post-v1.
 3. **This SDK's default `Logger` is silent, not stderr.** Unlike the MCP server (where
-   stderr is the *only* legitimate output channel), a library that prints unprompted is a
+   stderr is the _only_ legitimate output channel), a library that prints unprompted is a
    bug report waiting to happen. Don't reflexively port the sibling's "log everything to
    stderr by default" instinct here.
 4. **The cache interface is async** (`Promise`-returning `get`/`set`), unlike the sibling's
