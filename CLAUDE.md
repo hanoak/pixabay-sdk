@@ -302,6 +302,15 @@ formatAttribution(image) // -> "by {user} via Pixabay"
   CHANGELOG entry.
 - CI installs with `HUSKY=0` on the release job (the bot's own commit would otherwise be
   rejected by the local commit-msg hook).
+- **`changesets/action` is pinned at v2** (compatible with `@changesets/cli` v3, which this
+  repo uses — v1 only supports cli v2). Found during Phase 8 setup, not assumed from the
+  sibling project's `release.yml`, which predates this major: v2 renamed the action's inputs
+  (`version` → `version-script`, `publish` → `publish-script`) and — per the action's own
+  docs — setting `GITHUB_TOKEN` as a step `env:` var does **not** configure it the way v1's
+  did; the default `github.token` is used automatically unless a custom `github-token` input
+  is passed. `release.yml` does not set `GITHUB_TOKEN` at all for this reason. v2 also
+  requires "Allow GitHub Actions to create and approve pull requests" enabled in this repo's
+  Settings → Actions → General — a GitHub-side setting, not something committable here.
 
 ## Where this differs from pixabay-mcp-server
 

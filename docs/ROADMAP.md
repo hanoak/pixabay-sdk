@@ -87,10 +87,11 @@ optional sub-exports.
       logged/committed.
 - [ ] `[v1]` `.env.example` committed (for the local dev/test harness); real `.env`
       gitignored.
-- [ ] `[v1]` Secret scanning (gitleaks pre-commit hook, skip-if-absent + warn locally; CI
-      full-history scan).
-- [ ] `[v1]` Dependency security: `npm audit --omit=dev --audit-level=high`, Dependabot,
-      minimal deps (zod only in production).
+- [x] `[v1]` Secret scanning (gitleaks pre-commit hook, skip-if-absent + warn locally; CI
+      full-history scan). ✅ `.husky/pre-commit` (Phase 1) + `.github/workflows/secret-scan.yml`.
+- [x] `[v1]` Dependency security: `npm audit --omit=dev --audit-level=high`, Dependabot,
+      minimal deps (zod only in production). ✅ `audit:prod` script (Phase 1) +
+      `.github/dependabot.yml` (npm + github-actions, monthly).
 - [ ] `[v1]` Input validation before hitting the API — zod schemas on every public method,
       clamping/enum-checking, `URLSearchParams`-based encoding.
 - [ ] `[v1]` Supply-chain: `npm publish --provenance`, committed lockfile, SHA-pinned CI
@@ -153,17 +154,26 @@ optional sub-exports.
 
 ## 5. CI/CD & release automation
 
-- [ ] `[v1]` `ci.yml`: a `quality` job (typecheck, lint, format:check, `audit:prod`,
+- [x] `[v1]` `ci.yml`: a `quality` job (typecheck, lint, format:check, `audit:prod`,
       `test:coverage`, `license:check`), a `package` job (build + `publint` +
       `attw --pack . --profile node16` + a require/import smoke script +
       `npm pack --dry-run` confirming the tarball ships only `dist/` + README + LICENSE),
-      and a `test` job matrix (Node 22/24 × ubuntu/macos/windows).
-- [ ] `[v1]` `release.yml`: `changesets/action`, `HUSKY=0` in CI, `id-token: write` for
-      provenance, `NPM_TOKEN` repo secret, least-privilege `permissions:` per job.
-- [ ] `[v1]` `secret-scan.yml`: gitleaks over full history on every push/PR.
-- [ ] `[v1]` Automated releases (Changesets): version + changelog + npm publish.
-- [ ] `[v1]` Conventional commits via commitlint on `commit-msg`.
-- [ ] `[v1]` npm publish provenance.
+      and a `test` job matrix (Node 22/24 × ubuntu/macos/windows). ✅ `.github/workflows/ci.yml`.
+- [x] `[v1]` `release.yml`: `changesets/action`, `HUSKY=0` in CI, `id-token: write` for
+      provenance, `NPM_TOKEN` repo secret, least-privilege `permissions:` per job. ✅
+      `.github/workflows/release.yml`, pinned to `changesets/action` v2 (not v1, which the
+      sibling project used but doesn't support `@changesets/cli` v3) — see CLAUDE.md's
+      "Where this differs" section for the input-rename/`GITHUB_TOKEN` gotchas found here.
+      `NPM_TOKEN` secret and the repo's "allow Actions to create PRs" setting are still
+      needed on GitHub's side — not something committable from this repo.
+- [x] `[v1]` `secret-scan.yml`: gitleaks over full history on every push/PR. ✅
+      `.github/workflows/secret-scan.yml`.
+- [x] `[v1]` Automated releases (Changesets): version + changelog + npm publish. ✅ Wired in
+      `release.yml`; the actual first publish is Phase 10's job, not this one's.
+- [x] `[v1]` Conventional commits via commitlint on `commit-msg`. ✅ Since Phase 1
+      (`.husky/commit-msg` + `commitlint.config.js`).
+- [x] `[v1]` npm publish provenance. ✅ `release.yml` sets `NPM_CONFIG_PROVENANCE: 'true'`
+      with `id-token: write`.
 
 ## 6. Developer & contributor experience
 
