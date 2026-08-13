@@ -26,7 +26,16 @@ export interface PixabayClientOptions {
   logger?: Logger
   /** Defaults to the global `fetch`. Override for testing or a custom transport. */
   fetch?: typeof fetch
-  /** Per-request timeout, in milliseconds. Defaults to 10 seconds. */
+  /**
+   * Timeout, in milliseconds, for a single HTTP attempt. Defaults to 10
+   * seconds. Applied fresh to each attempt, including the one considered
+   * retry on a 429/5xx — it is **not** a ceiling on the overall `search()`/
+   * `get()` call, which can also include a rate-limit backoff wait of up to
+   * 60s before that retry (see {@link RateLimitInfo}). A shared overall
+   * deadline was considered and rejected: it would mean a long, deliberate
+   * rate-limit wait could burn the whole budget and make the retry it was
+   * waiting to permit fail instantly instead of never being attempted.
+   */
   timeoutMs?: number
   /** Applied when a search/get call omits its own `safesearch`. Defaults to `true`. */
   safesearch?: boolean
