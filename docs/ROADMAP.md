@@ -37,20 +37,21 @@ optional sub-exports.
 
 ## 0. Core stack decisions (foundational)
 
-- [ ] `[v1]` Language/runtime: **TypeScript + Node >=22** — decided (see CLAUDE.md; higher
+- [x] `[v1]` Language/runtime: **TypeScript + Node >=22** — decided (see CLAUDE.md; higher
       than the sibling project's `>=20` floor because of dev-tooling engine requirements
-      discovered at scaffold time)
-- [ ] `[v1]` Runtime validation with **zod** (public-method inputs _and_ Pixabay API
-      responses) — decided
-- [ ] `[v1]` Module format: **dual ESM + CJS** via tsup — decided (differs from the MCP
-      server's ESM-only)
-- [ ] `[v1]` Use **lenient/passthrough zod on API responses** (only `id` required per
-      resource) — decided, ported from the sibling project
-- [ ] `[v1]` No OAuth / no `auth/` directory — Pixabay's public API has no authenticated
-      write surface — decided
-- [ ] `[v1]` Confirm current major versions of `zod`, `tsup`, `vitest`, `typescript`,
+      discovered at scaffold time). ✅
+- [x] `[v1]` Runtime validation with **zod** (public-method inputs _and_ Pixabay API
+      responses) — decided. ✅ `lib/validate.ts` (input) + `schemas/parse.ts` (response).
+- [x] `[v1]` Module format: **dual ESM + CJS** via tsup — decided (differs from the MCP
+      server's ESM-only). ✅
+- [x] `[v1]` Use **lenient/passthrough zod on API responses** (only `id` required per
+      resource) — decided, ported from the sibling project. ✅ `schemas/image.ts`/`video.ts`.
+- [x] `[v1]` No OAuth / no `auth/` directory — Pixabay's public API has no authenticated
+      write surface — decided. ✅ Confirmed: `src/` has no such directory.
+- [x] `[v1]` Confirm current major versions of `zod`, `tsup`, `vitest`, `typescript`,
       `typescript-eslint`, `@arethetypeswrong/cli` at scaffold time rather than copying the
-      sibling project's pins blindly.
+      sibling project's pins blindly. ✅ Done in Phase 1 (also re-verified `@changesets/cli`
+      and its ecosystem in Phase 8, catching a real major-version mismatch there).
 
 ## 1. Pixabay API compliance (legal — non-negotiable)
 
@@ -96,54 +97,77 @@ optional sub-exports.
 
 ## 2. Security & secrets
 
-- [ ] `[v1]` API key via constructor param, with `PIXABAY_API_KEY` env fallback; never
-      logged/committed.
-- [ ] `[v1]` `.env.example` committed (for the local dev/test harness); real `.env`
-      gitignored.
+- [x] `[v1]` API key via constructor param, with `PIXABAY_API_KEY` env fallback; never
+      logged/committed. ✅ `client.ts` (Phase 6); redactor (Phase 2/3) keeps it out of logs;
+      `.env` gitignored so it's never committed.
+- [x] `[v1]` `.env.example` committed (for the local dev/test harness); real `.env`
+      gitignored. ✅ Since Phase 1.
 - [x] `[v1]` Secret scanning (gitleaks pre-commit hook, skip-if-absent + warn locally; CI
       full-history scan). ✅ `.husky/pre-commit` (Phase 1) + `.github/workflows/secret-scan.yml`.
 - [x] `[v1]` Dependency security: `npm audit --omit=dev --audit-level=high`, Dependabot,
       minimal deps (zod only in production). ✅ `audit:prod` script (Phase 1) +
       `.github/dependabot.yml` (npm + github-actions, monthly).
-- [ ] `[v1]` Input validation before hitting the API — zod schemas on every public method,
-      clamping/enum-checking, `URLSearchParams`-based encoding.
-- [ ] `[v1]` Supply-chain: `npm publish --provenance`, committed lockfile, SHA-pinned CI
-      actions (verify current SHAs at setup time).
-- [ ] `[v1]` **Fail-fast constructor validation** of `apiKey` — throws `PixabayConfigError`
-      synchronously with an actionable message, not a cryptic 401/403 on first call.
-- [ ] `[v1]` **Redact the `key` query parameter** from every log line (via the injected
+- [x] `[v1]` Input validation before hitting the API — zod schemas on every public method,
+      clamping/enum-checking, `URLSearchParams`-based encoding. ✅ `lib/validate.ts` +
+      resource param schemas (Phase 5); `buildUrl` encodes via `URLSearchParams` (Phase 3).
+- [x] `[v1]` Supply-chain: `npm publish --provenance`, committed lockfile, SHA-pinned CI
+      actions (verify current SHAs at setup time). ✅ `release.yml` sets
+      `NPM_CONFIG_PROVENANCE`; `package-lock.json` committed since Phase 1; every `uses:`
+      SHA verified against each action's current release in Phase 8, not copied from the
+      sibling project.
+- [x] `[v1]` **Fail-fast constructor validation** of `apiKey` — throws `PixabayConfigError`
+      synchronously with an actionable message, not a cryptic 401/403 on first call. ✅
+      Phase 6.
+- [x] `[v1]` **Redact the `key` query parameter** from every log line (via the injected
       `Logger`), thrown error message, and stack trace — the single most important
-      security control here, since Pixabay offers no header alternative.
-- [ ] `[v1]` Protect the publish path: npm account 2FA + a scoped least-privilege
-      automation token (or OIDC trusted publishing).
-- [ ] `[v1]` Least-privilege GitHub Actions permissions (top-level `contents: read`,
-      elevated only in the specific release job).
-- [ ] `[v1]` Dependency license-compliance check in CI (permissive-license allowlist).
-- [ ] `[v1]` SSRF guard on any URL taken from an API response, if a future feature ever adds
-      a server-side follow-up fetch (none planned for v1).
+      security control here, since Pixabay offers no header alternative. ✅ Phase 2/3 —
+      `lib/http.ts` deliberately never attaches the raw underlying fetch error as `cause`,
+      specifically to stop an unredacted URL leaking back in through an inspected error's
+      own message/stack.
+- [~] `[v1]` Protect the publish path: npm account 2FA + a scoped least-privilege
+  automation token (or OIDC trusted publishing). `NPM_TOKEN` repo secret added (user,
+  Phase 8); whether 2FA is actually enabled on the npm account itself is outside what's
+  inspectable from this repo — that's on the user to confirm before the first publish.
+- [x] `[v1]` Least-privilege GitHub Actions permissions (top-level `contents: read`,
+      elevated only in the specific release job). ✅ Phase 8.
+- [x] `[v1]` Dependency license-compliance check in CI (permissive-license allowlist). ✅
+      `license:check` script (Phase 1) wired into `ci.yml`'s `quality` job (Phase 8).
+- [x] `[v1]` SSRF guard on any URL taken from an API response, if a future feature ever adds
+      a server-side follow-up fetch (none planned for v1). ✅ N/A — confirmed no such
+      feature exists in this codebase.
 
 ## 3. Reliability & robustness
 
-- [ ] `[v1]` Error mapping: Pixabay 400/403/429/5xx → the typed `PixabayApiError`/
+- [x] `[v1]` Error mapping: Pixabay 400/403/429/5xx → the typed `PixabayApiError`/
       `PixabayRateLimitError` hierarchy (`src/errors.ts`), never a raw `fetch`/`zod` error.
-- [ ] `[v1]` Retries & backoff for 429/5xx, honoring `X-RateLimit-Reset` — exactly one
-      considered retry, never blind/looping.
-- [ ] `[v1]` Network timeouts (`AbortSignal.timeout`, combined with a caller-supplied
-      `AbortSignal` via `AbortSignal.any`).
-- [ ] `[v1]` Rate-limit awareness surfaced to the consumer via the `onRateLimit` callback
-      and logged at debug level.
-- [ ] `[v1]` The 24h cache doubles as a reliability feature — a repeated query within the
-      window returns instantly without touching the rate-limit budget.
-- [ ] `[v1]` `PixabayClient` instances must not share mutable module-level state — multiple
-      clients (e.g. different API keys) coexist safely in one process.
+      ✅ Phase 3 (`lib/http.ts`).
+- [x] `[v1]` Retries & backoff for 429/5xx, honoring `X-RateLimit-Reset` — exactly one
+      considered retry, never blind/looping. ✅ Phase 3.
+- [x] `[v1]` Network timeouts (`AbortSignal.timeout`, combined with a caller-supplied
+      `AbortSignal` via `AbortSignal.any`). ✅ Phase 3.
+- [x] `[v1]` Rate-limit awareness surfaced to the consumer via the `onRateLimit` callback
+      and logged at debug level. ✅ `onRateLimit` since Phase 3/6 — the debug-level log line
+      was actually missing until a Phase 9 ROADMAP-vs-code audit caught it; fixed then
+      (`notifyRateLimit` in `lib/http.ts`).
+- [x] `[v1]` The 24h cache doubles as a reliability feature — a repeated query within the
+      window returns instantly without touching the rate-limit budget. ✅ True by
+      construction since Phase 2/3 — no separate code needed, just noting the reliability
+      angle on the same feature.
+- [x] `[v1]` `PixabayClient` instances must not share mutable module-level state — multiple
+      clients (e.g. different API keys) coexist safely in one process. ✅ Confirmed: every
+      instance builds its own cache/logger/redactor/http client in its constructor; no
+      module-level singletons anywhere in `src/`.
 
 ## 4. Testing & quality
 
-- [ ] `[v1]` Unit tests with the Pixabay API mocked via dependency injection (fake
-      `fetch`) — zero real API calls in CI.
-- [ ] `[v1]` Unit tests for the cache layer: TTL expiry, key-stripping (never contains the
-      raw API key), normalization (param order doesn't create duplicate entries).
-- [ ] `[v1]` Type-checking, lint, and format checks in CI.
+- [x] `[v1]` Unit tests with the Pixabay API mocked via dependency injection (fake
+      `fetch`) — zero real API calls in CI. ✅ True throughout — `http.test.ts`,
+      `client.test.ts`, and `integration.test.ts` all inject a fake `fetch`.
+- [x] `[v1]` Unit tests for the cache layer: TTL expiry, key-stripping (never contains the
+      raw API key), normalization (param order doesn't create duplicate entries). ✅
+      `test/lib/cache.test.ts` (Phase 2, trimmed during the bare-minimal-tests pass but
+      still covering all three).
+- [x] `[v1]` Type-checking, lint, and format checks in CI. ✅ `ci.yml`'s `quality` job.
 - [x] `[v1]` Coverage thresholds (v8, regression floor in `vitest.config.ts`). ✅ Kept at 70
       (not raised to "just below the real suite's 84-97%" as originally planned here) —
       the bare-minimal-tests convention from CLAUDE.md means the floor exists only to catch
@@ -156,14 +180,19 @@ optional sub-exports.
       ✅ `scripts/verify-package-shape.mjs`, wired into `npm run check:package` after the
       build (plain Node + `node:assert`, not vitest — it validates the real `dist/` output,
       not source run through vitest's own TS-transform pipeline).
-- [ ] `[v1]` `publint` + `@arethetypeswrong/cli --pack . --profile node16` (confirmed at
+- [x] `[v1]` `publint` + `@arethetypeswrong/cli --pack . --profile node16` (confirmed at
       scaffold time — checks Node's own dual ESM/CJS resolution; `esm-only` doesn't apply
-      to this package) in CI.
-- [ ] `[v1]` Validate zod schemas against committed, sanitized **real captured** Pixabay
+      to this package) in CI. ✅ `ci.yml`'s `package` job.
+- [x] `[v1]` Validate zod schemas against committed, sanitized **real captured** Pixabay
       response fixtures (images + videos) — port the sibling project's fixtures if their
       shape still matches current docs, re-verify against a live response if/when a key is
-      available.
-- [ ] `[v1]` CI test matrix: Node 22/24 × Linux/macOS/Windows (+ `.nvmrc`).
+      available. ✅ with a note: inlined as literals directly in `test/schemas/image.test.ts`/
+      `video.test.ts`/`integration.test.ts` (sourced from Pixabay's own documented example
+      responses), not separate committed JSON fixture files like the sibling project — two
+      usages didn't justify fixture-loading infrastructure. Still not re-verified against a
+      live response; no `PIXABAY_API_KEY` has been available in this environment.
+- [x] `[v1]` CI test matrix: Node 22/24 × Linux/macOS/Windows (+ `.nvmrc`). ✅ `ci.yml`'s
+      `test` job.
 
 ## 5. CI/CD & release automation
 
