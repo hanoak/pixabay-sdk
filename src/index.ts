@@ -5,6 +5,7 @@ export {
   PixabayNetworkError,
   PixabayNotFoundError,
   PixabayRateLimitError,
+  PixabayResponseError,
   PixabayValidationError,
 } from './errors.js'
 export type { PixabayRateLimitErrorOptions } from './errors.js'

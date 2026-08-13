@@ -6,6 +6,7 @@ import {
   PixabayNetworkError,
   PixabayNotFoundError,
   PixabayRateLimitError,
+  PixabayResponseError,
   PixabayValidationError,
 } from '../src/errors.js'
 
@@ -72,5 +73,13 @@ describe('PixabayError hierarchy', () => {
     const error = new PixabayNetworkError('request failed', { cause: original })
     expect(error).toBeInstanceOf(PixabayError)
     expect(error.cause).toBe(original)
+  })
+
+  it('PixabayResponseError names the context and carries the zod error as cause', () => {
+    const zodError = new Error('mock ZodError')
+    const error = new PixabayResponseError('image search', { cause: zodError })
+    expect(error).toBeInstanceOf(PixabayError)
+    expect(error.message).toBe('Unexpected Pixabay response shape for image search.')
+    expect(error.cause).toBe(zodError)
   })
 })
