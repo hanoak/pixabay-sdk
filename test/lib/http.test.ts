@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { PixabayApiError, PixabayNetworkError, PixabayRateLimitError } from '../../src/errors.js'
 import { createHttpClient } from '../../src/lib/http.js'
 import { createInMemoryCache } from '../../src/lib/cache.js'
@@ -23,6 +23,10 @@ function baseConfig(fetchImpl: typeof fetch) {
 }
 
 describe('createHttpClient', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
   it('builds the request URL with the apiKey and params, and caches a successful response', async () => {
     const fetchImpl = vi.fn<typeof fetch>(async () => jsonResponse({ hits: [] }))
     const client = createHttpClient(baseConfig(fetchImpl))
