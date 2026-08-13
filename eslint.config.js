@@ -5,7 +5,9 @@ import eslintConfigPrettier from 'eslint-config-prettier'
 
 export default tseslint.config(
   {
-    ignores: ['dist/**', 'coverage/**', 'node_modules/**'],
+    // docs/api is TypeDoc's generated output (npm run docs:api) — browser JS
+    // it ships, not source this project owns.
+    ignores: ['dist/**', 'coverage/**', 'node_modules/**', 'docs/api/**'],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
