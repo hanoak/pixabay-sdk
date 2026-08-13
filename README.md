@@ -197,6 +197,41 @@ supplied by Pixabay contributors, not this SDK. If you're piping search results 
 prompt (this SDK has no prompt surface of its own), treat those fields as untrusted input —
 never interpolate them into a system or privileged prompt unescaped.
 
+## Troubleshooting & FAQ
+
+**`PixabayConfigError: Missing Pixabay API key` at startup.**
+Neither `apiKey` nor `PIXABAY_API_KEY` was set. Pass one explicitly or export the env var
+before your process starts — see [Getting a Pixabay API key](#getting-a-pixabay-api-key).
+
+**`get({ id })` throws `PixabayNotFoundError` for an id I know exists.**
+The client's `safesearch` default (`true`) filters explicit content out of the underlying
+search Pixabay uses for id lookups too — a filtered-out id resolves to zero hits, same as a
+filtered-out search result. Pass `{ id, safesearch: false }` if you need that specific id.
+
+**`fullHDURL`/`imageURL`/`vectorURL` are always `undefined` on `Image` results.**
+Those three fields require Pixabay's separate "full API access" approval tier — see
+[Getting a Pixabay API key](#getting-a-pixabay-api-key). Without it, Pixabay's response
+simply omits them; this isn't a bug in this SDK.
+
+**A `search()`/`get()` call throws `PixabayValidationError`.**
+Your input failed zod validation before any request was made — check `error.issues` for
+which field and why (e.g. `per_page` outside Pixabay's documented 3–200 range).
+
+**Repeated identical calls don't seem to hit the network.**
+That's the mandatory 24-hour cache working as designed — see
+[Caching & rate limits](#caching--rate-limits). Pass a custom `cache` if you need different
+behavior.
+
+**Does this require a paid Pixabay plan?**
+No — a free Pixabay account is enough for everything except the three fields noted above.
+
+**Is attribution required?**
+No — see [Attribution](#attribution).
+
+**Does the default cache persist across restarts or serverless invocations?**
+No — the default is an in-memory `Map`, scoped to the current process. Implement the
+`Cache` interface against Redis or similar if you need cross-invocation persistence.
+
 ## Compatibility
 
 |                | Supported                                                  |
