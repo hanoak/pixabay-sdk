@@ -1,8 +1,12 @@
 import type { z } from 'zod'
 
-// Base of the typed error hierarchy — never a raw fetch/zod error reaches the
-// consumer. Every subclass sets `this.name` explicitly (not `new.target.name`)
-// so both `instanceof` and `.name` survive bundling/minification.
+/**
+ * Base of this SDK's typed error hierarchy. Every method that can fail throws
+ * a subclass of this instead of a raw `fetch` or zod error.
+ *
+ * Every subclass sets `this.name` explicitly (not `new.target.name`) so both
+ * `instanceof` and `.name` survive bundling/minification.
+ */
 export class PixabayError extends Error {
   constructor(message: string, options?: ErrorOptions) {
     super(message, options)
@@ -10,8 +14,12 @@ export class PixabayError extends Error {
   }
 }
 
-// Bad/missing constructor config (e.g. no apiKey) — thrown synchronously by
-// `new PixabayClient(...)`, before any network call could happen.
+/**
+ * Bad or missing {@link PixabayClient} constructor configuration — for
+ * example, no API key from either the constructor option or the
+ * `PIXABAY_API_KEY` environment variable. Thrown synchronously by
+ * `new PixabayClient(...)`, before any network call could happen.
+ */
 export class PixabayConfigError extends PixabayError {
   constructor(message: string) {
     super(message)
@@ -19,8 +27,12 @@ export class PixabayConfigError extends PixabayError {
   }
 }
 
-// Bad input caught by zod before a request is made.
+/**
+ * Input rejected by zod validation before a request was ever made — for
+ * example, `per_page` outside Pixabay's documented 3–200 range.
+ */
 export class PixabayValidationError extends PixabayError {
+  /** The underlying zod validation issues. */
   readonly issues: z.core.$ZodIssue[]
 
   constructor(message: string, issues: z.core.$ZodIssue[]) {
@@ -30,9 +42,11 @@ export class PixabayValidationError extends PixabayError {
   }
 }
 
-// A 4xx/5xx response from Pixabay itself.
+/** A 4xx/5xx response from Pixabay itself. */
 export class PixabayApiError extends PixabayError {
+  /** The HTTP status code Pixabay responded with. */
   readonly status: number
+  /** Pixabay's own error message, if the response body had one. */
   // `declare`: under target ES2022, a plain class-field declaration emits a
   // native define (eagerly setting the field to `undefined`) before the
   // constructor body runs, which would make the field always "present" and
@@ -52,6 +66,7 @@ export class PixabayApiError extends PixabayError {
   }
 }
 
+/** Options accepted by the {@link PixabayRateLimitError} constructor. */
 export interface PixabayRateLimitErrorOptions {
   pixabayMessage?: string
   retryAfter?: number
@@ -59,11 +74,18 @@ export interface PixabayRateLimitErrorOptions {
   remaining?: number
 }
 
-// 429 specifically — carries whatever rate-limit headers Pixabay sent back.
+/**
+ * A `429` response from Pixabay — you've exceeded the ~100 requests/60s rate
+ * limit. Carries whatever `X-RateLimit-*` headers Pixabay sent back with the
+ * response.
+ */
 export class PixabayRateLimitError extends PixabayApiError {
+  /** Seconds to wait before retrying, from Pixabay's `X-RateLimit-Reset` header. */
   // See the `declare` comment on PixabayApiError.pixabayMessage above.
   declare readonly retryAfter?: number
+  /** Your key's request limit per window, from `X-RateLimit-Limit`. */
   declare readonly limit?: number
+  /** Requests remaining in the current window, from `X-RateLimit-Remaining`. */
   declare readonly remaining?: number
 
   constructor(message: string, options: PixabayRateLimitErrorOptions = {}) {
@@ -81,9 +103,12 @@ export class PixabayRateLimitError extends PixabayApiError {
   }
 }
 
-// `images.get`/`videos.get` resolved to zero hits — Pixabay itself returns a
-// 200 with an empty `hits` array for an unknown id, so this status is
-// synthesized by the SDK, not passed through from a real Pixabay response.
+/**
+ * Thrown by `images.get()`/`videos.get()` when Pixabay has no result for the
+ * given id. Pixabay itself returns `200 OK` with an empty `hits` array for an
+ * unknown id — this status is synthesized by the SDK, not passed through
+ * from a real Pixabay response.
+ */
 export class PixabayNotFoundError extends PixabayApiError {
   constructor(message: string) {
     super(404, message)
@@ -91,8 +116,11 @@ export class PixabayNotFoundError extends PixabayApiError {
   }
 }
 
-// Timeout/abort/transport failure — never carries the request URL (it may
-// contain `key=`); see lib/redact.ts and lib/http.ts.
+/**
+ * A timeout, cancellation, or other transport-level failure — the request
+ * never got a response from Pixabay at all. Never carries the request URL
+ * (it may contain the API key); see `lib/redact.ts` and `lib/http.ts`.
+ */
 export class PixabayNetworkError extends PixabayError {
   constructor(message: string, options?: ErrorOptions) {
     super(message, options)
@@ -100,12 +128,13 @@ export class PixabayNetworkError extends PixabayError {
   }
 }
 
-// Pixabay returned 200 OK, but the JSON body didn't match even our lenient
-// wire schema (only `id` is required there — see schemas/image.ts). Not part
-// of the original CLAUDE.md hierarchy; added here because it's a distinct
-// case from PixabayValidationError (which is about the *caller's* input,
-// checked before a request is ever sent) — this is about Pixabay's own
-// response shape, discovered after a successful HTTP round-trip.
+/**
+ * Pixabay returned `200 OK`, but the response body didn't match even this
+ * SDK's lenient wire schema (only `id` is required — see `schemas/image.ts`).
+ * Distinct from {@link PixabayValidationError}, which is about your input,
+ * checked before a request is ever sent — this is about Pixabay's own
+ * response shape, discovered after a successful HTTP round-trip.
+ */
 export class PixabayResponseError extends PixabayError {
   constructor(context: string, options?: ErrorOptions) {
     super(`Unexpected Pixabay response shape for ${context}.`, options)

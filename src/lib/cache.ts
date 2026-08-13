@@ -1,3 +1,10 @@
+/**
+ * A pluggable cache backing the mandatory 24-hour response cache Pixabay's
+ * terms require. Pass a custom implementation via
+ * {@link PixabayClientOptions.cache} — e.g. a Redis-backed one, if this SDK
+ * runs across short-lived invocations where an in-memory `Map` never
+ * persists between calls.
+ */
 export interface Cache {
   get: <T>(key: string) => Promise<T | undefined>
   set: <T>(key: string, value: T, ttlMs: number) => Promise<void>
@@ -8,14 +15,10 @@ interface CacheEntry {
   expiresAt: number
 }
 
-// Default in-memory implementation. `now` is injectable so tests can control
-// TTL expiry without waiting real time.
-//
-// The Cache interface itself is async even though nothing here actually
-// awaits anything — a consumer running this SDK across short-lived
-// serverless invocations needs a Redis/etc-backed implementation (an
-// in-memory Map never persists across invocations there), and an async
-// interface lets that be a drop-in swap instead of a later breaking change.
+/**
+ * The default {@link Cache} — an in-memory `Map`. `now` is injectable so
+ * tests can control TTL expiry without waiting real time.
+ */
 export function createInMemoryCache(now: () => number = Date.now): Cache {
   const store = new Map<string, CacheEntry>()
 

@@ -36,10 +36,19 @@ export const imageSchema = z.object({
   userImageURL: z.string().nullish(),
 })
 
+/**
+ * A single Pixabay image, as returned by {@link ImagesResource.search} (in
+ * `hits`) or {@link ImagesResource.get}. `fullHDURL`/`imageURL`/`vectorURL`/
+ * `imageWidth`/`imageHeight`/`imageSize` require Pixabay's "full API access"
+ * approval tier and may be absent for a standard key. Only `id` is
+ * guaranteed — every other field degrades gracefully to `null`/`undefined`
+ * if Pixabay ever adds, renames, or omits it.
+ */
 export type Image = z.infer<typeof imageSchema>
 
 export const imageSearchResponseSchema = searchResponseEnvelopeSchema.extend({
   hits: z.array(imageSchema).optional().default([]),
 })
 
+/** The result of {@link ImagesResource.search} — Pixabay's response envelope, untrimmed. */
 export type ImageSearchResponse = z.infer<typeof imageSearchResponseSchema>
