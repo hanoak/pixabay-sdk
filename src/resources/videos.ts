@@ -89,7 +89,12 @@ export class VideosResource {
       ...validated,
       safesearch: validated.safesearch ?? this.#defaultSafesearch,
     }
-    const json = await this.#http.request(VIDEOS_ENDPOINT, requestParams, options.signal)
+    const json = await this.#http.request(
+      VIDEOS_ENDPOINT,
+      requestParams,
+      (data) => videoSearchResponseSchema.safeParse(data).success,
+      options.signal,
+    )
     return parseResponse(videoSearchResponseSchema, json, 'video search', this.#logger)
   }
 

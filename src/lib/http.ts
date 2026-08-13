@@ -1,4 +1,9 @@
-import { PixabayApiError, PixabayNetworkError, PixabayRateLimitError } from '../errors.js'
+import {
+  PixabayApiError,
+  PixabayNetworkError,
+  PixabayRateLimitError,
+  PixabayResponseError,
+} from '../errors.js'
 import { buildCacheKey, type Cache, type CacheKeyParams } from './cache.js'
 import type { Logger } from './logger.js'
 import type { Redactor } from './redact.js'
@@ -29,7 +34,18 @@ export interface HttpClientConfig {
 }
 
 export interface HttpClient {
-  request: (endpoint: string, params: CacheKeyParams, signal?: AbortSignal) => Promise<unknown>
+  request: (
+    endpoint: string,
+    params: CacheKeyParams,
+    // Decides whether a fresh (non-cached) response is worth caching — the
+    // caller passes its own zod schema's safeParse check, so a response that
+    // fails schema validation never gets cached and replayed for 24h. Kept as
+    // an opaque predicate rather than importing zod here: this module stays
+    // schema-agnostic, per CLAUDE.md's separation of transport (lib/http.ts)
+    // from Pixabay's response shape (schemas/*.ts).
+    isCacheable: (json: unknown) => boolean,
+    signal?: AbortSignal,
+  ) => Promise<unknown>
 }
 
 const DEFAULT_TIMEOUT_MS = 10_000
@@ -114,6 +130,15 @@ function wait(ms: number): Promise<void> {
 
 export function createHttpClient(config: HttpClientConfig): HttpClient {
   const fetchImpl = config.fetch ?? fetch
+  // Per attempt, not a ceiling on the overall request(): a retried call gets a
+  // fresh timeoutMs for its own fetch, separate from whatever backoff delay
+  // preceded it (the 429 backoff in particular can itself be up to
+  // MAX_BACKOFF_SECONDS — folding that into a single overall deadline would
+  // mean a long, deliberate rate-limit wait could burn the entire budget and
+  // make the retry it was waiting to permit fail instantly instead of never
+  // being attempted at all, which is a worse outcome). Documented as such in
+  // PixabayClientOptions.timeoutMs and the README rather than silently implied
+  // to be a total-latency cap.
   const timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS
   const cacheTtlMs = config.cacheTtlMs ?? DEFAULT_CACHE_TTL_MS
 
@@ -143,14 +168,38 @@ export function createHttpClient(config: HttpClientConfig): HttpClient {
     }
   }
 
+  // The one retry, unified: log why, wait, re-attempt, re-notify. Both the 429
+  // and 5xx call sites in request() below differ only in the delay and the
+  // log message — this was previously two hand-duplicated copies.
+  async function retryOnce(
+    endpoint: string,
+    params: CacheKeyParams,
+    signal: AbortSignal | undefined,
+    delayMs: number,
+    logMessage: string,
+  ): Promise<{ response: Response; rateLimitInfo: RateLimitInfo }> {
+    config.logger.warn(logMessage)
+    await wait(delayMs)
+    const response = await attempt(endpoint, params, signal)
+    const rateLimitInfo = notifyRateLimit(config, response)
+    return { response, rateLimitInfo }
+  }
+
   // Every outbound GET routes through the cache (Pixabay's terms require 24h
-  // caching). Exactly one considered retry, never a blind or looping one: on
-  // 429, back off using X-RateLimit-Reset (only if Pixabay actually told us how
-  // long to wait — otherwise fail fast rather than guess); on 5xx, back off a
-  // short fixed delay since there's no equivalent server-provided guidance.
+  // caching) — but only once `isCacheable` confirms the body is worth
+  // caching; a response that fails the caller's schema check is returned
+  // as-is (so the caller can still throw its usual typed error) without ever
+  // being written to the cache, so a transient bad payload doesn't replay
+  // for 24h after Pixabay recovers.
+  //
+  // Exactly one considered retry, never a blind or looping one: on 429, back
+  // off using X-RateLimit-Reset (only if Pixabay actually told us how long to
+  // wait — otherwise fail fast rather than guess); on 5xx, back off a short
+  // fixed delay since there's no equivalent server-provided guidance.
   async function request(
     endpoint: string,
     params: CacheKeyParams,
+    isCacheable: (json: unknown) => boolean,
     signal?: AbortSignal,
   ): Promise<unknown> {
     const cacheKey = buildCacheKey(endpoint, params)
@@ -166,20 +215,26 @@ export function createHttpClient(config: HttpClientConfig): HttpClient {
     if (response.status === 429) {
       const retryAfterSeconds = parseRetryAfterSeconds(rateLimitInfo.reset)
       if (retryAfterSeconds !== undefined) {
-        config.logger.warn(
+        const retried = await retryOnce(
+          endpoint,
+          params,
+          signal,
+          retryAfterSeconds * 1000,
           `Pixabay rate limit hit — backing off ${retryAfterSeconds}s before one retry`,
         )
-        await wait(retryAfterSeconds * 1000)
-        response = await attempt(endpoint, params, signal)
-        rateLimitInfo = notifyRateLimit(config, response)
+        response = retried.response
+        rateLimitInfo = retried.rateLimitInfo
       }
     } else if (response.status >= 500) {
-      config.logger.warn(
+      const retried = await retryOnce(
+        endpoint,
+        params,
+        signal,
+        SERVER_ERROR_RETRY_DELAY_MS,
         `Pixabay returned ${response.status} — retrying once after ${SERVER_ERROR_RETRY_DELAY_MS}ms`,
       )
-      await wait(SERVER_ERROR_RETRY_DELAY_MS)
-      response = await attempt(endpoint, params, signal)
-      rateLimitInfo = notifyRateLimit(config, response)
+      response = retried.response
+      rateLimitInfo = retried.rateLimitInfo
     }
 
     if (!response.ok) {
@@ -209,8 +264,23 @@ export function createHttpClient(config: HttpClientConfig): HttpClient {
       throw new PixabayApiError(response.status, message, detail)
     }
 
-    const json = await response.json()
-    await config.cache.set(cacheKey, json, cacheTtlMs)
+    // Read as text first, not response.json() directly: a malformed/truncated
+    // body (e.g. a CDN error page during an outage) throws a raw SyntaxError
+    // from .json(), which would otherwise leak past this SDK's typed error
+    // hierarchy. Redact defensively before it can reach a log line, same
+    // reasoning as the non-ok body above.
+    const bodyText = await response.text()
+    let json: unknown
+    try {
+      json = JSON.parse(bodyText)
+    } catch {
+      config.logger.warn(`response body from ${endpoint} was not valid JSON`)
+      throw new PixabayResponseError(endpoint)
+    }
+
+    if (isCacheable(json)) {
+      await config.cache.set(cacheKey, json, cacheTtlMs)
+    }
     return json
   }
 

@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { PixabayApiError, PixabayNetworkError, PixabayRateLimitError } from '../../src/errors.js'
+import {
+  PixabayApiError,
+  PixabayNetworkError,
+  PixabayRateLimitError,
+  PixabayResponseError,
+} from '../../src/errors.js'
 import { createHttpClient } from '../../src/lib/http.js'
 import { createInMemoryCache } from '../../src/lib/cache.js'
 import { createNoopLogger } from '../../src/lib/logger.js'
@@ -22,6 +27,8 @@ function baseConfig(fetchImpl: typeof fetch) {
   }
 }
 
+const alwaysCacheable = () => true
+
 describe('createHttpClient', () => {
   afterEach(() => {
     vi.restoreAllMocks()
@@ -31,15 +38,26 @@ describe('createHttpClient', () => {
     const fetchImpl = vi.fn<typeof fetch>(async () => jsonResponse({ hits: [] }))
     const client = createHttpClient(baseConfig(fetchImpl))
 
-    const result = await client.request('https://pixabay.com/api/', { q: 'cats' })
+    const result = await client.request('https://pixabay.com/api/', { q: 'cats' }, alwaysCacheable)
 
     expect(result).toEqual({ hits: [] })
     const [calledUrl] = fetchImpl.mock.calls[0] ?? []
     expect((calledUrl as URL).searchParams.get('key')).toBe('test-api-key')
     expect((calledUrl as URL).searchParams.get('q')).toBe('cats')
 
-    await client.request('https://pixabay.com/api/', { q: 'cats' })
+    await client.request('https://pixabay.com/api/', { q: 'cats' }, alwaysCacheable)
     expect(fetchImpl).toHaveBeenCalledTimes(1)
+  })
+
+  it("does not cache a response that fails the caller's isCacheable check", async () => {
+    const fetchImpl = vi.fn<typeof fetch>(async () => jsonResponse({ hits: [] }))
+    const client = createHttpClient(baseConfig(fetchImpl))
+    const rejectEverything = () => false
+
+    await client.request('https://pixabay.com/api/', { q: 'cats' }, rejectEverything)
+    await client.request('https://pixabay.com/api/', { q: 'cats' }, rejectEverything)
+
+    expect(fetchImpl).toHaveBeenCalledTimes(2)
   })
 
   it('retries exactly once on 429, honoring X-RateLimit-Reset, then throws PixabayRateLimitError', async () => {
@@ -52,9 +70,9 @@ describe('createHttpClient', () => {
     )
     const client = createHttpClient(baseConfig(fetchImpl))
 
-    await expect(client.request('https://pixabay.com/api/', { q: 'cats' })).rejects.toBeInstanceOf(
-      PixabayRateLimitError,
-    )
+    await expect(
+      client.request('https://pixabay.com/api/', { q: 'cats' }, alwaysCacheable),
+    ).rejects.toBeInstanceOf(PixabayRateLimitError)
     expect(fetchImpl).toHaveBeenCalledTimes(2)
   })
 
@@ -62,7 +80,9 @@ describe('createHttpClient', () => {
     const fetchImpl = vi.fn(async () => new Response('oops', { status: 500 }))
     const client = createHttpClient(baseConfig(fetchImpl))
 
-    const error = await client.request('https://pixabay.com/api/', { q: 'cats' }).catch((e) => e)
+    const error = await client
+      .request('https://pixabay.com/api/', { q: 'cats' }, alwaysCacheable)
+      .catch((e) => e)
     expect(error).toBeInstanceOf(PixabayApiError)
     expect((error as PixabayApiError).status).toBe(500)
     expect(fetchImpl).toHaveBeenCalledTimes(2)
@@ -74,9 +94,21 @@ describe('createHttpClient', () => {
     })
     const client = createHttpClient(baseConfig(fetchImpl))
 
-    const error = await client.request('https://pixabay.com/api/', { q: 'cats' }).catch((e) => e)
+    const error = await client
+      .request('https://pixabay.com/api/', { q: 'cats' }, alwaysCacheable)
+      .catch((e) => e)
     expect(error).toBeInstanceOf(PixabayNetworkError)
     expect((error as Error).message).not.toContain('test-api-key')
+  })
+
+  it('throws PixabayResponseError, not a raw SyntaxError, when the response body is not valid JSON', async () => {
+    const fetchImpl = vi.fn(async () => new Response('<html>not json</html>', { status: 200 }))
+    const client = createHttpClient(baseConfig(fetchImpl))
+
+    const error = await client
+      .request('https://pixabay.com/api/', { q: 'cats' }, alwaysCacheable)
+      .catch((e) => e)
+    expect(error).toBeInstanceOf(PixabayResponseError)
   })
 
   it('surfaces rate-limit headers via the onRateLimit callback and a debug log line', async () => {
@@ -91,7 +123,7 @@ describe('createHttpClient', () => {
     const debugSpy = vi.spyOn(logger, 'debug')
     const client = createHttpClient({ ...baseConfig(fetchImpl), logger, onRateLimit })
 
-    await client.request('https://pixabay.com/api/', { q: 'cats' })
+    await client.request('https://pixabay.com/api/', { q: 'cats' }, alwaysCacheable)
 
     expect(onRateLimit).toHaveBeenCalledWith({ limit: 100, remaining: 99 })
     expect(debugSpy).toHaveBeenCalledWith('Pixabay rate limit remaining: 99')
@@ -103,7 +135,9 @@ describe('createHttpClient', () => {
     )
     const client = createHttpClient(baseConfig(fetchImpl))
 
-    const error = await client.request('https://pixabay.com/api/', {}).catch((e) => e)
+    const error = await client
+      .request('https://pixabay.com/api/', {}, alwaysCacheable)
+      .catch((e) => e)
     expect(error).toBeInstanceOf(PixabayApiError)
     expect((error as PixabayApiError).status).toBe(400)
     expect((error as PixabayApiError).pixabayMessage).toBe("Bad Request. Missing parameter 'q'.")
