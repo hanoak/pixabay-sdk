@@ -24,8 +24,17 @@ export type { RateLimitInfo } from './lib/http.js'
 export type { Image, ImageSearchResponse } from './schemas/image.js'
 export type { Video, VideoSearchResponse, VideoVariant } from './schemas/video.js'
 
-export type { ImageGetParams, ImageSearchParams, RequestOptions } from './resources/images.js'
-export type { VideoGetParams, VideoSearchParams } from './resources/videos.js'
+// Type-only: PixabayClient.images/.videos are typed as these classes, so the
+// generated API reference needs them documentable — but they're never
+// exported as runtime values. PixabayClient is the only composition root;
+// construct resources through it, not directly.
+export type {
+  ImageGetParams,
+  ImagesResource,
+  ImageSearchParams,
+  RequestOptions,
+} from './resources/images.js'
+export type { VideoGetParams, VideosResource, VideoSearchParams } from './resources/videos.js'
 
 export { formatAttribution } from './attribution.js'
 
