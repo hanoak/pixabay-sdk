@@ -1,6 +1,6 @@
 {
   "name": "@hanoak/pixabay-sdk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Unofficial TypeScript SDK for the Pixabay API — search and fetch royalty-free images and videos. Not affiliated with or endorsed by Pixabay.",
   "keywords": [
     "pixabay",
