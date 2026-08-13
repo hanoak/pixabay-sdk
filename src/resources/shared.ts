@@ -103,7 +103,12 @@ export async function getSingleHit<Schema extends z.ZodType<{ hits: unknown[] }>
   notFoundMessage: string,
   signal: AbortSignal | undefined,
 ): Promise<z.infer<Schema>['hits'][number]> {
-  const json = await http.request(endpoint, requestParams, signal)
+  const json = await http.request(
+    endpoint,
+    requestParams,
+    (data) => responseSchema.safeParse(data).success,
+    signal,
+  )
   const response = parseResponse(responseSchema, json, context, logger)
   const hit = response.hits[0]
   if (!hit) {

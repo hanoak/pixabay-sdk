@@ -106,7 +106,12 @@ export class ImagesResource {
       ...validated,
       safesearch: validated.safesearch ?? this.#defaultSafesearch,
     }
-    const json = await this.#http.request(IMAGES_ENDPOINT, requestParams, options.signal)
+    const json = await this.#http.request(
+      IMAGES_ENDPOINT,
+      requestParams,
+      (data) => imageSearchResponseSchema.safeParse(data).success,
+      options.signal,
+    )
     return parseResponse(imageSearchResponseSchema, json, 'image search', this.#logger)
   }
 
