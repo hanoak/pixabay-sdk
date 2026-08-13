@@ -115,14 +115,19 @@ src/
     logger.ts           # Logger interface (pluggable) + createNoopLogger() default +
                          # createConsoleLogger() opt-in convenience
     redact.ts            # createRedactor(apiKey) — ported near-verbatim from the sibling
+    validate.ts           # validateInput() — the "fail before touching network" zod boundary
   schemas/
     envelope.ts          # shared search-response envelope (total/totalHits)
     image.ts             # Pixabay image response schema — lenient (only `id` required)
     video.ts             # Pixabay video response schema — lenient (only `id` required)
-    parse.ts             # parseResponse() — safeParse + typed SchemaValidationError
+    parse.ts             # parseResponse() — safeParse + typed PixabayResponseError
   resources/
     images.ts            # ImagesResource: search(), get()
     videos.ts             # VideosResource: search(), get()
+    shared.ts             # RequestOptions/ResourceConfig, params shared by both resources
+                           # (LANGUAGES/CATEGORIES/ORDERS, the get-params schema), and
+                           # getSingleHit() — the shared validate/request/parse/unwrap
+                           # flow behind both resources' get()
 ```
 
 Rules:

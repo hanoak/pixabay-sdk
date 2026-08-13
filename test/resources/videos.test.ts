@@ -25,6 +25,7 @@ describe('VideosResource', () => {
         category: 'nature',
         safesearch: true,
       }),
+      expect.any(Function),
       undefined,
     )
   })
