@@ -6,18 +6,20 @@ library instead of a stdio MCP server.
 
 ## Roadmap
 
-### 🟡 v1 — code-complete, not yet published
+### 🟢 v1 — shipped
 
-The public surface is built and tested: `PixabayClient` with `.images`/`.videos` resources
-(`search`/`get`); dual ESM+CJS build; a mandatory 24-hour response cache behind a pluggable
-async `Cache` interface; default `safesearch=true`; a typed `PixabayError` hierarchy; a
-resilient HTTP client (retry/backoff on 429/5xx, rate-limit-header awareness, cancellation);
-a pluggable `Logger`; a TypeDoc API reference; the same CI quality gates the sibling project
-uses (coverage floor, dependency-license check, package validation, cross-platform test
-matrix, secret scanning) plus dual-package shape validation. No OAuth, no write endpoints —
-Pixabay's public API doesn't have any. What's left: Phase 10's actual first publish
-(CHANGELOG.md doesn't exist yet by design — Changesets creates it on the first
-`changeset version` run).
+`@hanoak/pixabay-sdk@1.0.0` is published on npm, with provenance (confirmed: a
+`https://slsa.dev/provenance/v1` attestation is attached on the registry). `PixabayClient`
+with `.images`/`.videos` resources (`search`/`get`); dual ESM+CJS build; a mandatory
+24-hour response cache behind a pluggable async `Cache` interface; default
+`safesearch=true`; a typed `PixabayError` hierarchy; a resilient HTTP client (retry/backoff
+on 429/5xx, rate-limit-header awareness, cancellation); a pluggable `Logger`; a TypeDoc API
+reference; the same CI quality gates the sibling project uses (coverage floor,
+dependency-license check, package validation, cross-platform test matrix, secret scanning)
+plus dual-package shape validation. No OAuth, no write endpoints — Pixabay's public API
+doesn't have any. No changeset existed for this first release (by design — see the
+checklist below), so `release.yml` published directly on merge to `main` with no
+"Version Packages" PR, exactly as intended.
 
 ### 🔲 v2 — not planned yet
 
