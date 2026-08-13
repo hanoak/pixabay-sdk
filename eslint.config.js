@@ -28,4 +28,13 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'error',
     },
   },
+  {
+    // Plain-JS verification scripts run directly via `node`, outside the
+    // TS project — a console-logging CLI script, not library code, so
+    // no-console doesn't apply here.
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      globals: { ...globals.node },
+    },
+  },
 )
