@@ -20,6 +20,7 @@ describe('ImagesResource', () => {
     expect(http.request).toHaveBeenCalledWith(
       'https://pixabay.com/api/',
       expect.objectContaining({ q: 'cats', safesearch: true }),
+      expect.any(Function),
       undefined,
     )
   })
@@ -31,6 +32,7 @@ describe('ImagesResource', () => {
     expect(http.request).toHaveBeenCalledWith(
       'https://pixabay.com/api/',
       expect.objectContaining({ safesearch: false }),
+      expect.any(Function),
       undefined,
     )
   })
