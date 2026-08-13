@@ -49,8 +49,10 @@ const SERVER_ERROR_RETRY_DELAY_MS = 500
 // Single choke point for request-URL construction, since Pixabay only accepts
 // the API key as a query param. The URL built here is only ever handed to
 // fetch() — it must never be logged or included in an error message; see
-// `attempt` and the redactor it wraps errors with below.
-export function buildUrl(endpoint: string, apiKey: string, params: CacheKeyParams): URL {
+// `attempt` and the redactor it wraps errors with below. Not exported: this
+// choke point is only meaningful from inside this module, and exporting it
+// would invite a future caller to bypass it.
+function buildUrl(endpoint: string, apiKey: string, params: CacheKeyParams): URL {
   const url = new URL(endpoint)
   url.searchParams.set('key', apiKey)
   for (const [key, value] of Object.entries(params)) {
