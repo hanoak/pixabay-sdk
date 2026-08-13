@@ -16,5 +16,8 @@ export type { Logger, LogLevel } from './lib/logger.js'
 export { createInMemoryCache } from './lib/cache.js'
 export type { Cache } from './lib/cache.js'
 
-// Remaining exports (PixabayClient, resource/param/result types,
-// formatAttribution) land in later phases — see docs/ROADMAP.md.
+export type { Image, ImageSearchResponse } from './schemas/image.js'
+export type { Video, VideoSearchResponse, VideoVariant } from './schemas/video.js'
+
+// Remaining exports (PixabayClient, resource/param types, formatAttribution)
+// land in later phases — see docs/ROADMAP.md.
