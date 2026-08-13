@@ -307,9 +307,11 @@ optional sub-exports.
 
 ## 10. Docs & maintenance
 
-- [ ] `[v1]` CHANGELOG (Changesets-managed) — no hand-written intro paragraph. Not created
-      yet — Changesets writes this file on the first `changeset version` run, which is
-      Phase 10's job, not this one's.
+- [x] `[v1]` CHANGELOG (Changesets-managed) — no hand-written intro paragraph. ✅ with a
+      one-time exception: the 1.0.0 entry was backfilled by hand in Phase 10, not produced
+      by `changeset version` — there's no prior published version to bump from (confirmed
+      the sibling project did the same for its own first release). No intro paragraph
+      either way; every entry from here on is genuinely Changesets-managed.
 - [x] `[v1]` Compatibility matrix (Node versions, ESM/CJS support) in the README. ✅ Phase 9.
 - [x] `[v1]` Deprecation policy for future breaking changes (CONTRIBUTING.md). ✅ Phase 1.
 - [x] `[v1]` TypeDoc reference kept in sync via a CI check (fails if doc comments are
