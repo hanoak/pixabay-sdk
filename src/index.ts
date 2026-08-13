@@ -28,13 +28,9 @@ export type { Video, VideoSearchResponse, VideoVariant } from './schemas/video.j
 // generated API reference needs them documentable — but they're never
 // exported as runtime values. PixabayClient is the only composition root;
 // construct resources through it, not directly.
-export type {
-  ImageGetParams,
-  ImagesResource,
-  ImageSearchParams,
-  RequestOptions,
-} from './resources/images.js'
+export type { ImageGetParams, ImagesResource, ImageSearchParams } from './resources/images.js'
 export type { VideoGetParams, VideosResource, VideoSearchParams } from './resources/videos.js'
+export type { RequestOptions } from './resources/shared.js'
 
 export { formatAttribution } from './attribution.js'
 

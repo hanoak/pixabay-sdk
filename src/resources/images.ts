@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { PixabayNotFoundError } from '../errors.js'
 import type { HttpClient } from '../lib/http.js'
 import type { Logger } from '../lib/logger.js'
 import { validateInput } from '../lib/validate.js'
@@ -9,63 +8,21 @@ import {
   type ImageSearchResponse,
 } from '../schemas/image.js'
 import { parseResponse } from '../schemas/parse.js'
+import {
+  CATEGORIES,
+  getParamsSchema,
+  getSingleHit,
+  LANGUAGES,
+  ORDERS,
+  type GetParams,
+  type RequestOptions,
+  type ResourceConfig,
+} from './shared.js'
 
 const IMAGES_ENDPOINT = 'https://pixabay.com/api/'
 
-const LANGUAGES = [
-  'cs',
-  'da',
-  'de',
-  'en',
-  'es',
-  'fr',
-  'id',
-  'it',
-  'hu',
-  'nl',
-  'no',
-  'pl',
-  'pt',
-  'ro',
-  'sk',
-  'fi',
-  'sv',
-  'tr',
-  'vi',
-  'th',
-  'bg',
-  'ru',
-  'el',
-  'ja',
-  'ko',
-  'zh',
-] as const
-
 const IMAGE_TYPES = ['all', 'photo', 'illustration', 'vector'] as const
 const ORIENTATIONS = ['all', 'horizontal', 'vertical'] as const
-
-const CATEGORIES = [
-  'backgrounds',
-  'fashion',
-  'nature',
-  'science',
-  'education',
-  'feelings',
-  'health',
-  'people',
-  'religion',
-  'places',
-  'animals',
-  'industry',
-  'computer',
-  'food',
-  'sports',
-  'transportation',
-  'travel',
-  'buildings',
-  'business',
-  'music',
-] as const
 
 const COLORS = [
   'grayscale',
@@ -83,8 +40,6 @@ const COLORS = [
   'black',
   'brown',
 ] as const
-
-const ORDERS = ['popular', 'latest'] as const
 
 // No `callback`/`pretty` — those are JSONP/pretty-print concerns for a raw HTTP
 // caller, not this fetch-and-parse SDK.
@@ -115,26 +70,8 @@ const imageSearchParamsSchema = z.object({
  */
 export type ImageSearchParams = z.infer<typeof imageSearchParamsSchema>
 
-const imageGetParamsSchema = z.object({
-  id: z.number().int().positive(),
-  safesearch: z.boolean().optional(),
-})
-
 /** Params for {@link ImagesResource.get}. */
-export type ImageGetParams = z.infer<typeof imageGetParamsSchema>
-
-/** Per-call options accepted by every resource method. */
-export interface RequestOptions {
-  /** Cancels the request, combined internally with the client's own timeout. */
-  signal?: AbortSignal
-}
-
-/** @internal */
-export interface ImagesResourceConfig {
-  http: HttpClient
-  logger: Logger
-  defaultSafesearch: boolean
-}
+export type ImageGetParams = GetParams
 
 /**
  * Search for and fetch Pixabay images. Accessed via
@@ -146,7 +83,7 @@ export class ImagesResource {
   readonly #defaultSafesearch: boolean
 
   /** @internal */
-  constructor(config: ImagesResourceConfig) {
+  constructor(config: ResourceConfig) {
     this.#http = config.http
     this.#logger = config.logger
     this.#defaultSafesearch = config.defaultSafesearch
@@ -186,17 +123,20 @@ export class ImagesResource {
    * @throws {PixabayNotFoundError} if Pixabay has no result for this id.
    */
   async get(params: ImageGetParams, options: RequestOptions = {}): Promise<Image> {
-    const validated = validateInput(imageGetParamsSchema, params)
+    const validated = validateInput(getParamsSchema, params)
     const requestParams = {
       id: validated.id,
       safesearch: validated.safesearch ?? this.#defaultSafesearch,
     }
-    const json = await this.#http.request(IMAGES_ENDPOINT, requestParams, options.signal)
-    const response = parseResponse(imageSearchResponseSchema, json, 'image get', this.#logger)
-    const hit = response.hits[0]
-    if (!hit) {
-      throw new PixabayNotFoundError(`No Pixabay image found for id ${validated.id}`)
-    }
-    return hit
+    return getSingleHit(
+      this.#http,
+      IMAGES_ENDPOINT,
+      requestParams,
+      imageSearchResponseSchema,
+      'image get',
+      this.#logger,
+      `No Pixabay image found for id ${validated.id}`,
+      options.signal,
+    )
   }
 }
