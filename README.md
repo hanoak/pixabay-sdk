@@ -240,6 +240,17 @@ No — the default is an in-memory `Map`, scoped to the current process. Impleme
 | Module formats | ESM (`import`) and CommonJS (`require`)                    |
 | TypeScript     | Ships its own `.d.ts`/`.d.cts`; no `@types` package needed |
 
+**This is a Node.js SDK, not a browser one — by design, not just by testing scope.**
+Technically, most of it only uses Web-standard APIs (`fetch`, `AbortSignal`) and would run
+in a modern browser or edge runtime if you passed `apiKey` explicitly (the
+`PIXABAY_API_KEY` environment-variable fallback simply doesn't apply where there's no
+`process` global, and this SDK degrades to requiring an explicit `apiKey` there rather than
+crashing). But you shouldn't actually do that: bundling a real Pixabay API key into
+client-side code ships it to every visitor's browser, in your JS bundle and in every network
+request's query string, for anyone to read and reuse against your rate limit. Call this SDK
+from your own backend, and have your frontend talk to _that_ — never embed the key directly
+in a browser bundle.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for dev setup, scripts, and conventions.

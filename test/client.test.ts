@@ -9,10 +9,18 @@ function jsonResponse(body: unknown) {
 describe('PixabayClient', () => {
   afterEach(() => {
     vi.unstubAllEnvs()
+    vi.unstubAllGlobals()
   })
 
   it('throws PixabayConfigError when no apiKey is available anywhere', () => {
     vi.stubEnv('PIXABAY_API_KEY', '')
+    expect(() => new PixabayClient()).toThrow(PixabayConfigError)
+  })
+
+  it('throws PixabayConfigError, not a raw ReferenceError, when `process` is unavailable', () => {
+    // Simulates a browser bundle or edge runtime (Cloudflare Workers, Vercel
+    // Edge) — no `process` global at all, unlike Node.
+    vi.stubGlobal('process', undefined)
     expect(() => new PixabayClient()).toThrow(PixabayConfigError)
   })
 
