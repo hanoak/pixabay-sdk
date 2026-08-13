@@ -5,6 +5,9 @@ node_modules/
 dist/
 *.tsbuildinfo
 
+# Generated API reference (npm run docs:api) — regenerated on demand, not committed.
+docs/api/
+
 # Test / coverage
 coverage/
 
