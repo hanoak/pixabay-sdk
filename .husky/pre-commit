@@ -1,0 +1,13 @@
+branch="$(git rev-parse --abbrev-ref HEAD)"
+if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then
+  echo "Direct commits to '$branch' are not allowed. Switch to 'feature'." >&2
+  exit 1
+fi
+
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks protect --staged --redact -v
+else
+  echo "gitleaks not found locally — skipping secret scan (CI runs a full-history scan)." >&2
+fi
+
+npx lint-staged
