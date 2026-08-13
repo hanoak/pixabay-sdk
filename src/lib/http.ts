@@ -71,6 +71,19 @@ function parseRateLimitInfo(response: Response): RateLimitInfo {
   return info
 }
 
+// Parses rate-limit headers off `response` and notifies both observability
+// surfaces this SDK offers: the caller's onRateLimit callback and a debug
+// log line, so rate-limit visibility is available even to a consumer who
+// only configured a Logger.
+function notifyRateLimit(config: HttpClientConfig, response: Response): RateLimitInfo {
+  const info = parseRateLimitInfo(response)
+  if (info.remaining !== undefined) {
+    config.logger.debug(`Pixabay rate limit remaining: ${info.remaining}`)
+  }
+  config.onRateLimit?.(info)
+  return info
+}
+
 function parseRetryAfterSeconds(reset: number | undefined): number | undefined {
   if (reset === undefined || reset < 0) {
     return undefined
@@ -146,8 +159,7 @@ export function createHttpClient(config: HttpClientConfig): HttpClient {
     }
 
     let response = await attempt(endpoint, params, signal)
-    let rateLimitInfo = parseRateLimitInfo(response)
-    config.onRateLimit?.(rateLimitInfo)
+    let rateLimitInfo = notifyRateLimit(config, response)
 
     if (response.status === 429) {
       const retryAfterSeconds = parseRetryAfterSeconds(rateLimitInfo.reset)
@@ -157,8 +169,7 @@ export function createHttpClient(config: HttpClientConfig): HttpClient {
         )
         await wait(retryAfterSeconds * 1000)
         response = await attempt(endpoint, params, signal)
-        rateLimitInfo = parseRateLimitInfo(response)
-        config.onRateLimit?.(rateLimitInfo)
+        rateLimitInfo = notifyRateLimit(config, response)
       }
     } else if (response.status >= 500) {
       config.logger.warn(
@@ -166,8 +177,7 @@ export function createHttpClient(config: HttpClientConfig): HttpClient {
       )
       await wait(SERVER_ERROR_RETRY_DELAY_MS)
       response = await attempt(endpoint, params, signal)
-      rateLimitInfo = parseRateLimitInfo(response)
-      config.onRateLimit?.(rateLimitInfo)
+      rateLimitInfo = notifyRateLimit(config, response)
     }
 
     if (!response.ok) {

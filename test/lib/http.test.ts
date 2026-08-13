@@ -75,7 +75,7 @@ describe('createHttpClient', () => {
     expect((error as Error).message).not.toContain('test-api-key')
   })
 
-  it('surfaces rate-limit headers via the onRateLimit callback', async () => {
+  it('surfaces rate-limit headers via the onRateLimit callback and a debug log line', async () => {
     const fetchImpl = vi.fn(async () =>
       jsonResponse(
         { hits: [] },
@@ -83,11 +83,14 @@ describe('createHttpClient', () => {
       ),
     )
     const onRateLimit = vi.fn()
-    const client = createHttpClient({ ...baseConfig(fetchImpl), onRateLimit })
+    const logger = createNoopLogger()
+    const debugSpy = vi.spyOn(logger, 'debug')
+    const client = createHttpClient({ ...baseConfig(fetchImpl), logger, onRateLimit })
 
     await client.request('https://pixabay.com/api/', { q: 'cats' })
 
     expect(onRateLimit).toHaveBeenCalledWith({ limit: 100, remaining: 99 })
+    expect(debugSpy).toHaveBeenCalledWith('Pixabay rate limit remaining: 99')
   })
 
   it("maps a non-ok, non-429 response to PixabayApiError carrying Pixabay's own message", async () => {
