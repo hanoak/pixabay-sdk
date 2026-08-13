@@ -87,7 +87,7 @@
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.11.0",
     "husky": "^9.1.7",
-    "license-checker-rseidelsohn": "^4.4.2",
+    "license-checker-rseidelsohn": "^5.0.1",
     "lint-staged": "^17.3.0",
     "prettier": "^3.9.6",
     "publint": "^0.3.23",
