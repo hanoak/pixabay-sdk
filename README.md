@@ -57,15 +57,15 @@ npm run docs:api   # generates docs/api/ locally
 new PixabayClient(options?: PixabayClientOptions)
 ```
 
-| Option        | Type                            | Default                       | Notes                                                                         |
-| ------------- | ------------------------------- | ----------------------------- | ----------------------------------------------------------------------------- |
-| `apiKey`      | `string`                        | `process.env.PIXABAY_API_KEY` | Throws `PixabayConfigError` if neither is set.                                |
-| `cache`       | `Cache`                         | in-memory                     | Backs the mandatory 24h response cache. See [Caching](#caching--rate-limits). |
-| `logger`      | `Logger`                        | silent no-op                  | See [Logging](#logging).                                                      |
-| `fetch`       | `typeof fetch`                  | global `fetch`                | Override for testing or a custom transport.                                   |
-| `timeoutMs`   | `number`                        | `10000`                       | Per-request timeout.                                                          |
-| `safesearch`  | `boolean`                       | `true`                        | Applied when a call omits its own `safesearch`.                               |
-| `onRateLimit` | `(info: RateLimitInfo) => void` | —                             | Called after every response with Pixabay's `X-RateLimit-*` headers.           |
+| Option        | Type                            | Default                       | Notes                                                                                                                                |
+| ------------- | ------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `apiKey`      | `string`                        | `process.env.PIXABAY_API_KEY` | Throws `PixabayConfigError` if neither is set.                                                                                       |
+| `cache`       | `Cache`                         | in-memory                     | Backs the mandatory 24h response cache. See [Caching](#caching--rate-limits).                                                        |
+| `logger`      | `Logger`                        | silent no-op                  | See [Logging](#logging).                                                                                                             |
+| `fetch`       | `typeof fetch`                  | global `fetch`                | Override for testing or a custom transport.                                                                                          |
+| `timeoutMs`   | `number`                        | `10000`                       | Timeout per HTTP attempt — not a ceiling on the overall call, which can also include a rate-limit backoff wait before its one retry. |
+| `safesearch`  | `boolean`                       | `true`                        | Applied when a call omits its own `safesearch`.                                                                                      |
+| `onRateLimit` | `(info: RateLimitInfo) => void` | —                             | Called after every response with Pixabay's `X-RateLimit-*` headers.                                                                  |
 
 ### `pixabay.images` / `pixabay.videos`
 
