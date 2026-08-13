@@ -1,3 +1,6 @@
+export { PixabayClient } from './client.js'
+export type { PixabayClientOptions } from './client.js'
+
 export {
   PixabayApiError,
   PixabayConfigError,
@@ -16,8 +19,14 @@ export type { Logger, LogLevel } from './lib/logger.js'
 export { createInMemoryCache } from './lib/cache.js'
 export type { Cache } from './lib/cache.js'
 
+export type { RateLimitInfo } from './lib/http.js'
+
 export type { Image, ImageSearchResponse } from './schemas/image.js'
 export type { Video, VideoSearchResponse, VideoVariant } from './schemas/video.js'
 
-// Remaining exports (PixabayClient, resource/param types, formatAttribution)
-// land in later phases — see docs/ROADMAP.md.
+export type { ImageGetParams, ImageSearchParams, RequestOptions } from './resources/images.js'
+export type { VideoGetParams, VideoSearchParams } from './resources/videos.js'
+
+export { formatAttribution } from './attribution.js'
+
+export { version } from './version.js'
