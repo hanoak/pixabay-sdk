@@ -5,6 +5,7 @@
     "types": ["node"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+    "resolveJsonModule": true,
     "noEmit": true,
     "ignoreDeprecations": "6.0",
     "strict": true,
