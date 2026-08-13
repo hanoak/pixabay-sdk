@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+# Default to read-only; the release job elevates only what it needs.
+permissions:
+  contents: read
+
+concurrency: release-${{ github.ref }}
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # commit version bumps / open the "Version Packages" PR
+      pull-requests: write # open/update that PR
+      id-token: write # npm provenance via OIDC
+    # Don't install husky git hooks in CI: changesets/action commits
+    # "Version Packages", which our commitlint commit-msg hook would reject —
+    # failing the release. HUSKY=0 makes `npm ci`'s prepare step skip hook setup.
+    env:
+      HUSKY: 0
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: 'https://registry.npmjs.org'
+      - run: npm ci
+      - run: npm run build
+      # changesets/action v2 (compatible with @changesets/cli v3, which this repo
+      # uses): input names are version-script/publish-script, not v1's
+      # version/publish. Also, per the action's own docs, setting GITHUB_TOKEN as
+      # an env var does NOT configure it — the default github.token is used
+      # automatically since we're not passing a custom github-token input.
+      # When changesets exist, opens/updates a "Version Packages" PR. When that
+      # PR is merged (bumping the version + CHANGELOG), publishes to npm with
+      # provenance. Requires an NPM_TOKEN repo secret (a granular publish token)
+      # and, in this repo's Settings > Actions > General, "Allow GitHub Actions
+      # to create and approve pull requests" enabled.
+      - uses: changesets/action@198f833dd7d863100ea6e28967bc9a9fdefadb0a # v2.1.0
+        with:
+          version-script: npx changeset version
+          publish-script: npm run release
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'true'
