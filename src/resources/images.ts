@@ -105,40 +105,61 @@ const imageSearchParamsSchema = z.object({
   per_page: z.number().int().min(3).max(200).optional(),
 })
 
+/**
+ * Params for {@link ImagesResource.search}. Mirrors Pixabay's documented
+ * image search parameters (see https://pixabay.com/api/docs/#api_search_images)
+ * — `q`, `lang`, `image_type`, `orientation`, `category`, `min_width`/
+ * `min_height`, `colors`, `editors_choice`, `order`, and pagination via
+ * `page`/`per_page` (clamped 3–200). `safesearch` defaults to the client's
+ * own default (see {@link PixabayClientOptions.safesearch}) when omitted.
+ */
 export type ImageSearchParams = z.infer<typeof imageSearchParamsSchema>
 
 const imageGetParamsSchema = z.object({
   id: z.number().int().positive(),
-  // safesearch still applies to an id lookup — Pixabay's `id` param is a
-  // filter on the same search endpoint, not a separate route, so a safe-
-  // searched-away id resolves to zero hits just like a filtered-out search
-  // hit would. Overridable per call for exactly that reason.
   safesearch: z.boolean().optional(),
 })
 
+/** Params for {@link ImagesResource.get}. */
 export type ImageGetParams = z.infer<typeof imageGetParamsSchema>
 
+/** Per-call options accepted by every resource method. */
 export interface RequestOptions {
+  /** Cancels the request, combined internally with the client's own timeout. */
   signal?: AbortSignal
 }
 
+/** @internal */
 export interface ImagesResourceConfig {
   http: HttpClient
   logger: Logger
   defaultSafesearch: boolean
 }
 
+/**
+ * Search for and fetch Pixabay images. Accessed via
+ * {@link PixabayClient.images} — not constructed directly.
+ */
 export class ImagesResource {
   readonly #http: HttpClient
   readonly #logger: Logger
   readonly #defaultSafesearch: boolean
 
+  /** @internal */
   constructor(config: ImagesResourceConfig) {
     this.#http = config.http
     this.#logger = config.logger
     this.#defaultSafesearch = config.defaultSafesearch
   }
 
+  /**
+   * Search Pixabay images. Returns Pixabay's response envelope and hit array
+   * untrimmed — use {@link ImagesResource.get} for a single known id.
+   *
+   * @throws {PixabayValidationError} if `params` fails validation.
+   * @throws {PixabayApiError} on a non-ok Pixabay response (or {@link PixabayRateLimitError} specifically on a 429).
+   * @throws {PixabayNetworkError} on a timeout or transport failure.
+   */
   async search(
     params: ImageSearchParams = {},
     options: RequestOptions = {},
@@ -152,6 +173,18 @@ export class ImagesResource {
     return parseResponse(imageSearchResponseSchema, json, 'image search', this.#logger)
   }
 
+  /**
+   * Fetch a single Pixabay image by id. Internally the same search-with-`id`
+   * request as {@link ImagesResource.search} (confirmed against Pixabay's
+   * docs that `id` is a filter on the search endpoint, not a separate
+   * route), with the single hit unwrapped.
+   *
+   * `safesearch` still applies to an id lookup — a safe-searched-away id
+   * resolves to zero hits just like a filtered-out search hit would.
+   * Override it per call if you need to look up explicit content.
+   *
+   * @throws {PixabayNotFoundError} if Pixabay has no result for this id.
+   */
   async get(params: ImageGetParams, options: RequestOptions = {}): Promise<Image> {
     const validated = validateInput(imageGetParamsSchema, params)
     const requestParams = {

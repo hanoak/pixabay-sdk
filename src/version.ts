@@ -5,4 +5,6 @@
 import pkg from '../package.json' with { type: 'json' }
 
 export const name: string = pkg.name
+
+/** This SDK's own version, as published to npm. */
 export const version: string = pkg.version

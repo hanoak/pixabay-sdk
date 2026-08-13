@@ -1,3 +1,8 @@
+/**
+ * A pluggable logging interface. Pass a custom implementation via
+ * {@link PixabayClientOptions.logger} to route this SDK's log lines through
+ * your own logging stack (pino, winston, etc.).
+ */
 export interface Logger {
   debug: (message: string) => void
   info: (message: string) => void
@@ -12,10 +17,12 @@ const NOOP_LOGGER: Logger = {
   error: () => {},
 }
 
-// Default: silent. Unlike a process-owning stdio server (where stderr is the
-// only legitimate output channel), this SDK gets embedded in a host app that
-// hasn't asked for it to print anything — an unprompted console line from a
-// dependency is a surprise, not a feature.
+/**
+ * The default {@link Logger} — silent. Unlike a process-owning stdio server
+ * (where stderr is the only legitimate output channel), this SDK gets
+ * embedded in a host app that hasn't asked for it to print anything — an
+ * unprompted console line from a dependency is a surprise, not a feature.
+ */
 export function createNoopLogger(): Logger {
   return NOOP_LOGGER
 }
@@ -29,8 +36,12 @@ const LEVEL_WEIGHT: Record<LogLevel, number> = {
   error: 40,
 }
 
-// Opt-in convenience for local scripts/debugging — the only place console.*
-// is used in this codebase (see eslint.config.js's unqualified `no-console`).
+/**
+ * An opt-in {@link Logger} that prints to the console, for local scripts and
+ * debugging. Not the default — see {@link createNoopLogger}.
+ *
+ * @param level - Minimum level to print. Defaults to `'info'`.
+ */
 export function createConsoleLogger(level: LogLevel = 'info'): Logger {
   const threshold = LEVEL_WEIGHT[level]
   const enabled = (messageLevel: LogLevel): boolean => LEVEL_WEIGHT[messageLevel] >= threshold

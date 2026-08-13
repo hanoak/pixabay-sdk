@@ -3,9 +3,17 @@ import { buildCacheKey, type Cache, type CacheKeyParams } from './cache.js'
 import type { Logger } from './logger.js'
 import type { Redactor } from './redact.js'
 
+/**
+ * Pixabay's `X-RateLimit-*` response headers, parsed. Passed to
+ * {@link PixabayClientOptions.onRateLimit} after every response. Any field
+ * may be absent if Pixabay didn't send the corresponding header.
+ */
 export interface RateLimitInfo {
+  /** Your key's request limit per window, from `X-RateLimit-Limit`. */
   limit?: number
+  /** Requests remaining in the current window, from `X-RateLimit-Remaining`. */
   remaining?: number
+  /** Seconds until the window resets, from `X-RateLimit-Reset`. */
   reset?: number
 }
 

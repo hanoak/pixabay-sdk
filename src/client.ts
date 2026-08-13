@@ -6,24 +6,48 @@ import { createRedactor } from './lib/redact.js'
 import { ImagesResource } from './resources/images.js'
 import { VideosResource } from './resources/videos.js'
 
+/** Constructor options for {@link PixabayClient}. */
 export interface PixabayClientOptions {
-  // Falls back to process.env.PIXABAY_API_KEY when omitted.
+  /** Falls back to `process.env.PIXABAY_API_KEY` when omitted. */
   apiKey?: string
+  /**
+   * Backs the mandatory 24-hour response cache Pixabay's terms require.
+   * Defaults to an in-memory implementation — swap in a Redis-backed (or
+   * similar) {@link Cache} if this SDK runs across short-lived invocations.
+   */
   cache?: Cache
+  /** Defaults to a silent no-op logger. See {@link createConsoleLogger} for an opt-in convenience. */
   logger?: Logger
+  /** Defaults to the global `fetch`. Override for testing or a custom transport. */
   fetch?: typeof fetch
+  /** Per-request timeout, in milliseconds. Defaults to 10 seconds. */
   timeoutMs?: number
-  // Applied when a search/get call omits its own `safesearch`. Default true.
+  /** Applied when a search/get call omits its own `safesearch`. Defaults to `true`. */
   safesearch?: boolean
+  /** Called after every response with whatever `X-RateLimit-*` headers Pixabay sent back. */
   onRateLimit?: (info: RateLimitInfo) => void
 }
 
 const DEFAULT_SAFESEARCH = true
 
+/**
+ * The entry point for this SDK. Wraps the Pixabay images and videos search
+ * APIs behind a resource-namespaced client with a mandatory response cache,
+ * retry/backoff, and a typed error hierarchy.
+ *
+ * @example
+ * ```ts
+ * const pixabay = new PixabayClient({ apiKey: process.env.PIXABAY_API_KEY })
+ * const { hits } = await pixabay.images.search({ q: 'cats' })
+ * ```
+ */
 export class PixabayClient {
+  /** Search and fetch Pixabay images. */
   readonly images: ImagesResource
+  /** Search and fetch Pixabay videos. */
   readonly videos: VideosResource
 
+  /** @throws {PixabayConfigError} if no API key is available from either `options.apiKey` or `PIXABAY_API_KEY`. */
   constructor(options: PixabayClientOptions = {}) {
     // `||`, not `??` — an empty string is as unusable as a missing key.
     const apiKey = options.apiKey || process.env.PIXABAY_API_KEY
