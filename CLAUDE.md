@@ -171,7 +171,7 @@ A small typed hierarchy — never raw `fetch`/`zod` errors leaking to the consum
 PixabayError                     (base; extends Error, sets this.name)
 ├─ PixabayConfigError            bad/missing constructor config — thrown synchronously
 ├─ PixabayValidationError        bad input caught by zod before a request is made
-│                                 · issues: z.ZodIssue[]
+│                                 · issues: z.core.$ZodIssue[]
 ├─ PixabayApiError               4xx/5xx from Pixabay
 │  │                              · status: number
 │  │                              · pixabayMessage?: string  (Pixabay's own body text)
@@ -179,8 +179,23 @@ PixabayError                     (base; extends Error, sets this.name)
 │  │                              · retryAfter?: number      (seconds, from X-RateLimit-Reset)
 │  │                              · limit?: number · remaining?: number
 │  └─ PixabayNotFoundError       get()-by-id resolved to zero hits (see below)
-└─ PixabayNetworkError           timeout/abort/transport failure
-                                  · cause?: unknown           (the original fetch error)
+├─ PixabayNetworkError           timeout/abort/transport failure
+│                                 · never carries `cause` from lib/http.ts — a raw fetch/DNS
+│                                   error's message can embed the request URL (with `key=`);
+│                                   the message itself is redacted instead, so cause stays
+│                                   unset from that call site rather than risking a leak
+│                                   through an inspected cause chain. (Not the original
+│                                   CLAUDE.md wording — refined once lib/http.ts was actually
+│                                   built and the redaction implication became concrete.)
+└─ PixabayResponseError          Pixabay returned 200 OK but the body didn't match even our
+                                   lenient wire schema — added during Phase 4 (schemas), not
+                                   in the original hierarchy sketch. Distinct from
+                                   PixabayValidationError: that one is about the caller's
+                                   input before a request is sent; this one is about
+                                   Pixabay's own response after a successful round-trip.
+                                   Carries the ZodError as `cause` (safe — issues describe
+                                   expected/received types and field paths, never the raw
+                                   request URL or apiKey).
 ```
 
 Never swallow; never log-and-continue silently. Every constructor sets

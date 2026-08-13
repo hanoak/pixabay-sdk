@@ -99,3 +99,16 @@ export class PixabayNetworkError extends PixabayError {
     this.name = 'PixabayNetworkError'
   }
 }
+
+// Pixabay returned 200 OK, but the JSON body didn't match even our lenient
+// wire schema (only `id` is required there — see schemas/image.ts). Not part
+// of the original CLAUDE.md hierarchy; added here because it's a distinct
+// case from PixabayValidationError (which is about the *caller's* input,
+// checked before a request is ever sent) — this is about Pixabay's own
+// response shape, discovered after a successful HTTP round-trip.
+export class PixabayResponseError extends PixabayError {
+  constructor(context: string, options?: ErrorOptions) {
+    super(`Unexpected Pixabay response shape for ${context}.`, options)
+    this.name = 'PixabayResponseError'
+  }
+}
