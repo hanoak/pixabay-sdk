@@ -10,21 +10,22 @@ export interface Logger {
   error: (message: string) => void
 }
 
-const NOOP_LOGGER: Logger = {
-  debug: () => {},
-  info: () => {},
-  warn: () => {},
-  error: () => {},
-}
-
 /**
  * The default {@link Logger} — silent. Unlike a process-owning stdio server
  * (where stderr is the only legitimate output channel), this SDK gets
  * embedded in a host app that hasn't asked for it to print anything — an
  * unprompted console line from a dependency is a surprise, not a feature.
+ *
+ * Returns a fresh object per call, not a shared singleton — a caller (or a
+ * test) that mutates or spies on one instance must never affect another.
  */
 export function createNoopLogger(): Logger {
-  return NOOP_LOGGER
+  return {
+    debug: () => {},
+    info: () => {},
+    warn: () => {},
+    error: () => {},
+  }
 }
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error'
