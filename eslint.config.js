@@ -1,0 +1,31 @@
+import eslint from '@eslint/js'
+import tseslint from 'typescript-eslint'
+import globals from 'globals'
+import eslintConfigPrettier from 'eslint-config-prettier'
+
+export default tseslint.config(
+  {
+    ignores: ['dist/**', 'coverage/**', 'node_modules/**'],
+  },
+  eslint.configs.recommended,
+  ...tseslint.configs.recommended,
+  eslintConfigPrettier,
+  {
+    files: ['src/**/*.ts', 'test/**/*.ts'],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+      globals: { ...globals.node },
+    },
+    rules: {
+      // No exception here (unlike the sibling MCP server's `allow: ['error']`):
+      // this SDK's default logger is silent, and the one legitimate console.*
+      // call (the opt-in createConsoleLogger()) gets a scoped
+      // eslint-disable-next-line, not a blanket rule allowance.
+      'no-console': 'error',
+      '@typescript-eslint/no-explicit-any': 'error',
+    },
+  },
+)
