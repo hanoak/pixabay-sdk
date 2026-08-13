@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Generated API reference (npm run docs:api) — regenerated on demand, not committed.
+docs/api/
+
+# Test / coverage
+coverage/
+
+# Secrets & local env
+.env
+.env.local
+.env.*.local
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*

@@ -1,0 +1,100 @@
+{
+  "name": "@hanoak/pixabay-sdk",
+  "version": "1.0.0",
+  "description": "Unofficial TypeScript SDK for the Pixabay API — search and fetch royalty-free images and videos. Not affiliated with or endorsed by Pixabay.",
+  "keywords": [
+    "pixabay",
+    "pixabay-api",
+    "sdk",
+    "typescript",
+    "images",
+    "videos",
+    "stock-media",
+    "stock-photos",
+    "royalty-free"
+  ],
+  "license": "MIT",
+  "author": "Hanoak S",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hanoak/pixabay-sdk.git"
+  },
+  "homepage": "https://github.com/hanoak/pixabay-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/hanoak/pixabay-sdk/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "docs:api": "typedoc",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm run test",
+    "check:package": "npm run build && npx publint && npx attw --pack . --profile node16 && node scripts/verify-package-shape.mjs",
+    "audit:prod": "npm audit --omit=dev --audit-level=high",
+    "license:check": "license-checker-rseidelsohn --production --onlyAllow \"MIT;ISC;BSD-2-Clause;BSD-3-Clause;Apache-2.0;0BSD;CC0-1.0;Unlicense;BlueOak-1.0.0;Python-2.0\"",
+    "changeset": "changeset",
+    "release": "changeset publish",
+    "prepublishOnly": "npm run build",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@changesets/cli": "^3.0.0",
+    "@commitlint/cli": "^21.2.2",
+    "@commitlint/config-conventional": "^21.2.2",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.20.1",
+    "@vitest/coverage-v8": "^4.1.10",
+    "eslint": "^10.8.1",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.11.0",
+    "husky": "^9.1.7",
+    "license-checker-rseidelsohn": "^4.4.2",
+    "lint-staged": "^17.3.0",
+    "prettier": "^3.9.6",
+    "publint": "^0.3.23",
+    "tsup": "^8.5.1",
+    "typedoc": "^0.28.20",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.67.0",
+    "vitest": "^4.1.10"
+  }
+}
