@@ -15,9 +15,9 @@ resilient HTTP client (retry/backoff on 429/5xx, rate-limit-header awareness, ca
 a pluggable `Logger`; a TypeDoc API reference; the same CI quality gates the sibling project
 uses (coverage floor, dependency-license check, package validation, cross-platform test
 matrix, secret scanning) plus dual-package shape validation. No OAuth, no write endpoints —
-Pixabay's public API doesn't have any. What's left: a handful of Phase 9 community-health
-files (CODE_OF_CONDUCT.md, SECURITY.md, issue/PR templates, README troubleshooting/FAQ,
-CODEOWNERS — see the checklist below) and Phase 10's actual first publish.
+Pixabay's public API doesn't have any. What's left: Phase 10's actual first publish
+(CHANGELOG.md doesn't exist yet by design — Changesets creates it on the first
+`changeset version` run).
 
 ### 🔲 v2 — not planned yet
 
@@ -229,10 +229,15 @@ optional sub-exports.
       Inspector section needed here). ✅ Finalized — scripts table now includes every
       script that exists (`docs:api` added), versioning/deprecation policy already in place
       since Phase 1.
-- [ ] `[v1]` CODE_OF_CONDUCT.md (Contributor Covenant, same as sibling).
-- [ ] `[v1]` Issue/PR templates.
+- [x] `[v1]` CODE_OF_CONDUCT.md (Contributor Covenant, same as sibling). ✅ Ported from the
+      sibling verbatim (content isn't project-specific), repo URL updated.
+- [x] `[v1]` Issue/PR templates. ✅ Bug report + feature request (adapted for SDK
+      usage — no more "tool/MCP client" wording), config.yml routing blank issues to the
+      security-advisory link, and a PR template checklist (adds a changeset-included item
+      the sibling's didn't need).
 - [x] `[v1]` LICENSE confirmed permissive (MIT). ✅ Since Phase 0.
-- [ ] `[v1]` SECURITY.md (vulnerability reporting).
+- [x] `[v1]` SECURITY.md (vulnerability reporting). ✅ Adapted for constructor/env-var key
+      handling instead of the sibling's env-only + stdout/stderr framing.
 - [x] `[v1]` Badges: npm version, build status, license, TypeDoc link. ✅ with a note: CI
       status, license, and Node-version badges are in the README now; the **npm version**
       badge is deliberately deferred to Phase 10 — adding it before the package is actually
@@ -241,7 +246,7 @@ optional sub-exports.
       Phase 1's CONTRIBUTING.md scaffold.
 - [x] `[v1]` Explicit no-telemetry / privacy statement ("collects nothing, only contacts
       pixabay.com when you call a method"). ✅ README's "Privacy" section.
-- [ ] `[v1]` README troubleshooting + FAQ section.
+- [x] `[v1]` README troubleshooting + FAQ section. ✅
 - [x] `[v1]` **TypeDoc API reference** — generated from source doc comments. ✅ Decided:
       generated on demand (`npm run docs:api`), output to `docs/api/` (gitignored, not
       committed), verified in CI's `quality` job so broken TSDoc/`@link`s fail the build.
@@ -352,7 +357,7 @@ optional sub-exports.
 
 ## 14. Governance
 
-- [ ] `[v1]` Add CODEOWNERS.
+- [x] `[v1]` Add CODEOWNERS. ✅ `* @hanoak`, same as the sibling project.
 - [ ] `[post-v1]` `FUNDING.yml` — only if the project actually seeks sponsorship.
 
 ---
