@@ -191,10 +191,12 @@ optional sub-exports.
 - [ ] `[v1]` Explicit no-telemetry / privacy statement ("collects nothing, only contacts
       pixabay.com when you call a method").
 - [ ] `[v1]` README troubleshooting + FAQ section.
-- [ ] `[v1]` **TypeDoc API reference** — generated from source doc comments; decide at
-      scaffold time whether it's a committed static site, a CI artifact, or published to
-      GitHub Pages (flagging: GitHub Pages needs a one-time repo settings change on the
-      user's side, same category as branch-protection setup below).
+- [x] `[v1]` **TypeDoc API reference** — generated from source doc comments. ✅ Decided:
+      generated on demand (`npm run docs:api`), output to `docs/api/` (gitignored, not
+      committed), verified in CI's `quality` job so broken TSDoc/`@link`s fail the build.
+      **Not** published to GitHub Pages for v1 — that needs a one-time repo settings change
+      (Settings → Pages) and felt like scope creep for this phase; flagged as an optional
+      follow-up, same category as branch protection.
 
 ## 7. API surface / DX of the SDK
 
