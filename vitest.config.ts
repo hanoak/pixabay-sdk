@@ -17,9 +17,14 @@ export default defineConfig({
         // meaningful behavior, not exhaustive edge/branch enumeration), so a
         // 90 floor would force padding tests just to hit a number. This still
         // catches the real regression this floor exists for — a new module
-        // landing with no tests at all. Recalibrate in Phase 7 to just below
-        // what the full v1 suite achieves; never lower it after that to turn
-        // a red build green.
+        // landing with no tests at all.
+        //
+        // Phase 7 revisit: the real v1 suite now sits around 84-97% across
+        // these four metrics. Deliberately NOT raised to "just below that" as
+        // originally planned in docs/ROADMAP.md — doing so would recreate the
+        // exact coverage-chasing pressure this floor was lowered to remove in
+        // Phase 2 (see CLAUDE.md's Testing standards). 70 stays the floor;
+        // never lower it further to turn a red build green.
         lines: 70,
         functions: 70,
         branches: 70,
