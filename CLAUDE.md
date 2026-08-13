@@ -233,6 +233,14 @@ formatAttribution(image) // -> "by {user} via Pixabay"
 
 ## Testing standards
 
+- **Keep tests bare-minimal — one case per meaningful behavior, not exhaustive edge/branch
+  enumeration.** If closing a coverage gap means adding a test that doesn't correspond to a
+  real behavior worth verifying (e.g. a boundary condition no caller can hit), prefer
+  simplifying the source instead (see the `error`-level-is-never-suppressible dead branch
+  removed from `lib/logger.ts` during scaffolding) or folding the missing case into an
+  existing test's data rather than adding a new test. The coverage floor in
+  `vitest.config.ts` is deliberately lower than the sibling project's for this reason — see
+  that file's comment.
 - **Dependency injection over network mocking** — a fake `fetch` injected into
   `PixabayClient`; zero real network calls in CI, no `msw`/`nock`.
 - Unit tests per module: cache TTL/eviction/key-stripping, redactor, retry/backoff math,
