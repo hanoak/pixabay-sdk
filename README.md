@@ -1,15 +1,12 @@
 # @hanoak/pixabay-sdk
 
+[![npm version](https://img.shields.io/npm/v/@hanoak/pixabay-sdk.svg)](https://www.npmjs.com/package/@hanoak/pixabay-sdk)
 [![CI](https://github.com/hanoak/pixabay-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/hanoak/pixabay-sdk/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Node.js >=22](https://img.shields.io/badge/node-%3E%3D22-brightgreen)](package.json)
 
 Unofficial TypeScript SDK for the [Pixabay API](https://pixabay.com/api/docs/) — search and
 fetch royalty-free images and videos. Not affiliated with or endorsed by Pixabay.
-
-> **Status:** feature-complete for v1, not yet published to npm — see
-> [docs/ROADMAP.md](docs/ROADMAP.md) for what's left before the first release. Until then,
-> use it from source (see [CONTRIBUTING.md](CONTRIBUTING.md)).
 
 ## Install
 
