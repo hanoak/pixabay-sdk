@@ -240,10 +240,10 @@ optional sub-exports.
 - [x] `[v1]` LICENSE confirmed permissive (MIT). ✅ Since Phase 0.
 - [x] `[v1]` SECURITY.md (vulnerability reporting). ✅ Adapted for constructor/env-var key
       handling instead of the sibling's env-only + stdout/stderr framing.
-- [x] `[v1]` Badges: npm version, build status, license, TypeDoc link. ✅ with a note: CI
-      status, license, and Node-version badges are in the README now; the **npm version**
-      badge is deliberately deferred to Phase 10 — adding it before the package is actually
-      published would render as a misleading "not found" badge.
+- [x] `[v1]` Badges: npm version, build status, license, TypeDoc link. ✅ npm version, CI
+      status, license, and Node-version badges are all in the README now that the package is
+      actually published (the npm badge was deliberately withheld until then, to avoid
+      rendering as a misleading "not found" badge).
 - [x] `[v1]` Semantic versioning commitment + deprecation policy (CONTRIBUTING.md). ✅ Since
       Phase 1's CONTRIBUTING.md scaffold.
 - [x] `[v1]` Explicit no-telemetry / privacy statement ("collects nothing, only contacts
@@ -354,8 +354,8 @@ optional sub-exports.
 ## 13. Discovery & ecosystem
 
 - [x] `[v1]` npm listing with good `keywords`/`description` for search discoverability. ✅
-- [x] `[v1]` README badges linking npm, CI, license, TypeDoc. ✅ with the same npm-badge
-      deferral noted in §6.
+- [x] `[v1]` README badges linking npm, CI, license, TypeDoc. ✅ npm badge added once the
+      package was published — see §6.
 - [ ] `[post-v1]` Community catalogs / "awesome-typescript-sdks"-style listings, if any
       turn out to be relevant (no MCP-registry equivalent applies here).
 
